@@ -1,4 +1,4 @@
--- Enhanced GUI Library with Close Button and Rounded Corners
+-- Improved GUI Library with Centered Positioning and Larger Size
 
 local library = {
     windowCount = 0;
@@ -8,40 +8,43 @@ local dragger = {};
 local resizer = {};
 
 do
-    local mouse = game:GetService("Players").LocalPlayer:GetMouse();
     local inputService = game:GetService('UserInputService');
-    local heartbeat = game:GetService("RunService").Heartbeat;
+    local runService = game:GetService("RunService");
 
     function dragger.new(frame)
-        local s, event = pcall(function()
-            return frame.MouseEnter
-        end)
+        local dragging = false
+        local dragInput, mousePos, framePos
 
-        if s then
-            frame.Active = true;
+        frame.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = true
+                mousePos = input.Position
+                framePos = frame.Position
 
-            event:Connect(function()
-                local input = frame.InputBegan:Connect(function(key)
-                    if key.UserInputType == Enum.UserInputType.MouseButton1 or key.UserInputType == Enum.UserInputType.Touch then
-                        local objectPosition = Vector2.new(mouse.X - frame.AbsolutePosition.X, mouse.Y - frame.AbsolutePosition.Y);
-                        while heartbeat:Wait() and inputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) do
-                            frame.Position = UDim2.new(0, mouse.X - objectPosition.X + (frame.Size.X.Offset * frame.AnchorPoint.X), 0, mouse.Y - objectPosition.Y + (frame.Size.Y.Offset * frame.AnchorPoint.Y))
-                        end
+                input.Changed:Connect(function()
+                    if input.UserInputState == Enum.UserInputState.End then
+                        dragging = false
                     end
                 end)
+            end
+        end)
 
-                local leave;
-                leave = frame.MouseLeave:Connect(function()
-                    input:Disconnect();
-                    leave:Disconnect();
-                end)
-            end)
-        end
-    end
+        frame.InputChanged:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseMovement then
+                dragInput = input
+            end
+        end)
 
-    function resizer.new(p, s)
-        p:GetPropertyChangedSignal('AbsoluteSize'):Connect(function()
-            s.Size = UDim2.new(s.Size.X.Scale, s.Size.X.Offset, s.Size.Y.Scale, p.AbsoluteSize.Y);
+        inputService.InputChanged:Connect(function(input)
+            if input == dragInput and dragging then
+                local delta = input.Position - mousePos
+                frame.Position = UDim2.new(
+                    framePos.X.Scale,
+                    framePos.X.Offset + delta.X,
+                    framePos.Y.Scale,
+                    framePos.Y.Offset + delta.Y
+                )
+            end
         end)
     end
 end
@@ -76,19 +79,30 @@ function library:CreateWindow(options)
         closed = false;
     }
 
-    local options = options or {};
-    setmetatable(options, {__index = defaults})
+    options = setmetatable(options or {}, {__index = defaults})
 
     self.windowCount = self.windowCount + 1;
 
-    library.gui = library.gui or self:Create("ScreenGui", {Name = "UILibrary", Parent = game:GetService("CoreGui")})
+    library.gui = library.gui or self:Create("ScreenGui", {
+        Name = "UILibrary",
+        Parent = game:GetService("CoreGui"),
+        ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+    })
+
+    -- Calculate centered position
+    local screenSize = workspace.CurrentCamera.ViewportSize
+    local windowWidth = 400
+    local windowHeight = 50
+    local centerX = (screenSize.X - windowWidth) / 2
+    local centerY = (screenSize.Y - windowHeight) / 2
+
     window.frame = self:Create("Frame", {
         Name = options.text;
         Parent = self.gui,
         Active = true,
         BackgroundTransparency = 0,
-        Size = UDim2.new(0, 220, 0, 40),
-        Position = UDim2.new(0, (15 + ((240 * self.windowCount) - 240)), 0, 15),
+        Size = UDim2.new(0, windowWidth, 0, windowHeight),
+        Position = UDim2.new(0, centerX, 0, centerY),
         BackgroundColor3 = options.barcolor,
         BorderSizePixel = 0;
     })
@@ -102,7 +116,7 @@ function library:CreateWindow(options)
         BorderSizePixel = 0;
         BackgroundColor3 = options.bgcolor,
         Position = UDim2.new(0, 0, 1, 0),
-        Size = UDim2.new(1, 0, 0, 25),
+        Size = UDim2.new(1, 0, 0, 0),
         ClipsDescendants = true;
     })
     -- UICorner for rounded edges
@@ -123,13 +137,13 @@ function library:CreateWindow(options)
         Name = 'Sorter';
         SortOrder = Enum.SortOrder.LayoutOrder;
         Parent = window.container;
-        Padding = UDim.new(0, 5),
+        Padding = UDim.new(0, 10),
     })
    
     window.padder = self:Create('UIPadding', {
         Name = 'Padding';
-        PaddingLeft = UDim.new(0, 10);
-        PaddingTop = UDim.new(0, 10);
+        PaddingLeft = UDim.new(0, 15);
+        PaddingTop = UDim.new(0, 15);
         Parent = window.container;
     })
 
@@ -137,10 +151,10 @@ function library:CreateWindow(options)
         Name = 'Toggle';
         ZIndex = 2,
         BackgroundTransparency = 1;
-        Position = UDim2.new(1, -70, 0, 0),
-        Size = UDim2.new(0, 35, 1, 0),
+        Position = UDim2.new(1, -90, 0, 0),
+        Size = UDim2.new(0, 45, 1, 0),
         Text = "-",
-        TextSize = 24,
+        TextSize = 28,
         TextColor3 = options.txtcolor,
         Font = options.font;
         Parent = window.frame,
@@ -160,10 +174,10 @@ function library:CreateWindow(options)
         Name = 'Close';
         ZIndex = 2,
         BackgroundTransparency = 1;
-        Position = UDim2.new(1, -35, 0, 0),
-        Size = UDim2.new(0, 35, 1, 0),
+        Position = UDim2.new(1, -45, 0, 0),
+        Size = UDim2.new(0, 45, 1, 0),
         Text = "X",
-        TextSize = 24,
+        TextSize = 28,
         TextColor3 = Color3.fromRGB(255, 0, 0),
         Font = options.font;
         Parent = window.frame,
@@ -173,7 +187,7 @@ function library:CreateWindow(options)
     end)
 
     self:Create("TextLabel", {
-        Size = UDim2.new(1, -80, 1, 0),
+        Size = UDim2.new(1, -100, 1, 0),
         BackgroundTransparency = 1;
         BorderSizePixel = 0;
         TextColor3 = options.txtcolor,
@@ -181,19 +195,16 @@ function library:CreateWindow(options)
         Font = options.font;
         Text = options.text or "Window",
         Name = "Window",
-        Position = UDim2.new(0, 10, 0, 0),
+        Position = UDim2.new(0, 15, 0, 0),
         TextXAlignment = Enum.TextXAlignment.Left,
         Parent = window.frame,
     })
 
-    do
-        dragger.new(window.frame)
-        resizer.new(window.background, window.container);
-    end
+    dragger.new(window.frame)
 
     local function getSize()
         local ySize = 0;
-        for i, object in next, window.container:GetChildren() do
+        for _, object in ipairs(window.container:GetChildren()) do
             if (not object:IsA('UIListLayout')) and (not object:IsA('UIPadding')) then
                 ySize = ySize + object.AbsoluteSize.Y + window.organizer.Padding.Offset
             end
@@ -218,12 +229,12 @@ function library:CreateWindow(options)
         callback = callback or function() end
         local label = library:Create("TextLabel", {
             Text =  text,
-            Size = UDim2.new(1, -10, 0, 30);
+            Size = UDim2.new(1, -10, 0, 40);
             BackgroundTransparency = 1;
             TextColor3 = options.txtcolor,
             TextXAlignment = Enum.TextXAlignment.Left;
             LayoutOrder = self.count;
-            TextSize = 18,
+            TextSize = 20,
             Font = options.font,
             Parent = self.container;
         })
@@ -232,9 +243,9 @@ function library:CreateWindow(options)
             Text = "OFF",
             TextColor3 = Color3.fromRGB(255, 0, 0),
             BackgroundColor3 = options.boxcolor,
-            Position = UDim2.new(1, -60, 0.5, -15),
-            Size = UDim2.new(0, 50, 0, 30),
-            TextSize = 18,
+            Position = UDim2.new(1, -70, 0.5, -20),
+            Size = UDim2.new(0, 60, 0, 40),
+            TextSize = 20,
             Font = options.font,
             Parent = label;
             AnchorPoint = Vector2.new(1, 0.5),
@@ -262,11 +273,11 @@ function library:CreateWindow(options)
 
         local box = library:Create("TextBox", {
             PlaceholderText = text,
-            Size = UDim2.new(1, -10, 0, 30);
+            Size = UDim2.new(1, -10, 0, 40);
             BackgroundColor3 = options.boxcolor,
             TextColor3 = options.txtcolor,
             TextXAlignment = Enum.TextXAlignment.Left;
-            TextSize = 18,
+            TextSize = 20,
             Text = "",
             Font = options.font,
             LayoutOrder = self.count;
@@ -293,11 +304,11 @@ function library:CreateWindow(options)
         callback = callback or function() end
         local button = library:Create("TextButton", {
             Text =  text,
-            Size = UDim2.new(1, -10, 0, 30);
+            Size = UDim2.new(1, -10, 0, 40);
             BackgroundColor3 = options.boxcolor,
             TextColor3 = options.txtcolor,
             TextXAlignment = Enum.TextXAlignment.Center;
-            TextSize = 18,
+            TextSize = 20,
             Font = options.font,
             LayoutOrder = self.count;
             Parent = self.container;
@@ -315,7 +326,7 @@ function library:CreateWindow(options)
     function window:AddLabel(text)
         self.count = self.count + 1;
        
-        local tSize = game:GetService('TextService'):GetTextSize(text, 18, options.font, Vector2.new(window.container.AbsoluteSize.X - 20, math.huge))
+        local tSize = game:GetService('TextService'):GetTextSize(text, 20, options.font, Vector2.new(window.container.AbsoluteSize.X - 20, math.huge))
 
         local label = library:Create("TextLabel", {
             Text =  text,
@@ -324,7 +335,7 @@ function library:CreateWindow(options)
             BackgroundTransparency = 1;
             TextColor3 = options.txtcolor,
             TextXAlignment = Enum.TextXAlignment.Left;
-            TextSize = 18,
+            TextSize = 20,
             Font = options.font,
             LayoutOrder = self.count;
             Parent = self.container;
@@ -340,11 +351,11 @@ function library:CreateWindow(options)
        
         callback = callback or function() end
         local dropdown = library:Create("TextButton", {
-            Size = UDim2.new(1, -10, 0, 30);
+            Size = UDim2.new(1, -10, 0, 40);
             BackgroundColor3 = options.boxcolor,
             TextColor3 = options.txtcolor,
             TextXAlignment = Enum.TextXAlignment.Left;
-            TextSize = 18,
+            TextSize = 20,
             Text = default,
             Font = options.font,
             BorderSizePixel = 0;
@@ -378,7 +389,7 @@ function library:CreateWindow(options)
 
         local function count(t)
             local c = 0;
-            for i, v in next, t do
+            for _, _ in next, t do
                 c = c + 1
             end
             return c;
@@ -400,7 +411,7 @@ function library:CreateWindow(options)
             frame = library:Create('Frame', {
                 Position = UDim2.new(0, 0, 1, 0);
                 BackgroundColor3 = options.boxcolor;
-                Size = UDim2.new(1, 0, 0, (count(optionsList) * 35));
+                Size = UDim2.new(1, 0, 0, (count(optionsList) * 45));
                 BorderSizePixel = 0;
                 Parent = dropdown;
                 ClipsDescendants = true;
@@ -423,9 +434,9 @@ function library:CreateWindow(options)
                     BackgroundColor3 = options.barcolor;
                     TextColor3 = options.txtcolor,
                     BorderSizePixel = 0;
-                    TextSize = 18;
+                    TextSize = 20;
                     Font = options.font;
-                    Size = UDim2.new(1, -10, 0, 30);
+                    Size = UDim2.new(1, -10, 0, 40);
                     LayoutOrder = i;
                     Parent = frame;
                     ZIndex = 2;
