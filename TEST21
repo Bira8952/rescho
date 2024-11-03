@@ -1,447 +1,375 @@
--- Advanced GUI Library with Improved Design and Functionality
+-- Disney-Themed GUI Library
 
-local library = {
-    windowCount = 0,
-}
+-- Initialize the library table
+local library = {}
 
-local inputService = game:GetService('UserInputService')
-local tweenService = game:GetService('TweenService')
-local runService = game:GetService('RunService')
+-- Services
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
 
--- Dragger Module
-local dragger = {}
-do
-    function dragger.new(frame)
-        local dragging = false
-        local dragInput, mouseStart, frameStart
-
-        frame.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                dragging = true
-                mouseStart = input.Position
-                frameStart = frame.Position
-
-                input.Changed:Connect(function()
-                    if input.UserInputState == Enum.UserInputState.End then
-                        dragging = false
-                    end
-                end)
-            end
-        end)
-
-        frame.InputChanged:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseMovement then
-                dragInput = input
-            end
-        end)
-
-        inputService.InputChanged:Connect(function(input)
-            if input == dragInput and dragging then
-                local delta = input.Position - mouseStart
-                frame.Position = UDim2.new(
-                    frameStart.X.Scale,
-                    frameStart.X.Offset + delta.X,
-                    frameStart.Y.Scale,
-                    frameStart.Y.Offset + delta.Y
-                )
-            end
-        end)
-    end
-end
-
--- Default Options
+-- Default settings with Disney-inspired colors and fonts
 local defaults = {
-    textColor = Color3.fromRGB(255, 255, 255),
-    backgroundColor = Color3.fromRGB(30, 30, 30),
-    accentColor = Color3.fromRGB(0, 122, 204),
-    font = Enum.Font.SourceSansSemibold,
+    TextColor = Color3.fromRGB(255, 255, 255),
+    BackgroundColor = Color3.fromRGB(25, 25, 112), -- Midnight Blue
+    AccentColor = Color3.fromRGB(65, 105, 225), -- Royal Blue
+    ButtonColor = Color3.fromRGB(30, 144, 255), -- Dodger Blue
+    Font = Enum.Font.Cartoon, -- A playful font resembling Disney style
 }
 
--- Library Functions
-function library:Create(class, props)
+-- Function to create new instances with properties
+function library:Create(class, properties)
     local object = Instance.new(class)
-    for prop, value in pairs(props) do
+    for prop, value in pairs(properties) do
         object[prop] = value
     end
     return object
 end
 
-function library:CreateWindow(options)
-    options = options or {}
-    setmetatable(options, { __index = defaults })
-    assert(options.text, "Window must have a 'text' property.")
-
-    self.windowCount = self.windowCount + 1
+-- Function to create a draggable GUI window
+function library:CreateWindow(title)
+    title = title or "Disney GUI"
+    local window = {}
 
     -- ScreenGui
-    library.gui = library.gui or self:Create("ScreenGui", {
-        Name = "UILibrary",
+    local screenGui = self:Create("ScreenGui", {
+        Name = "DisneyGUI",
         Parent = game:GetService("CoreGui"),
+        ResetOnSpawn = false,
         ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
     })
 
-    -- Main Window Frame
-    local windowWidth = 400
-    local windowHeight = 50
-    local screenSize = workspace.CurrentCamera.ViewportSize
-    local centerX = (screenSize.X - windowWidth) / 2
-    local centerY = (screenSize.Y - windowHeight) / 2
-
-    local windowFrame = self:Create("Frame", {
-        Name = options.text,
-        Parent = library.gui,
-        BackgroundColor3 = options.backgroundColor,
-        Size = UDim2.new(0, windowWidth, 0, windowHeight),
-        Position = UDim2.new(0, centerX, 0, centerY),
+    -- Main Frame
+    local mainFrame = self:Create("Frame", {
+        Name = "MainFrame",
+        Parent = screenGui,
+        BackgroundColor3 = defaults.BackgroundColor,
+        Size = UDim2.new(0, 400, 0, 50),
+        Position = UDim2.new(0.5, -200, 0.5, -150),
+        AnchorPoint = Vector2.new(0.5, 0.5),
         BorderSizePixel = 0,
-        ClipsDescendants = true,
     })
-    local windowCorner = self:Create("UICorner", {
-        CornerRadius = UDim.new(0, 8),
-        Parent = windowFrame,
+
+    -- UICorner for rounded edges
+    local mainCorner = self:Create("UICorner", {
+        Parent = mainFrame,
+        CornerRadius = UDim.new(0, 15),
     })
 
     -- Title Bar
     local titleBar = self:Create("Frame", {
-        Parent = windowFrame,
-        BackgroundColor3 = options.accentColor,
-        Size = UDim2.new(1, 0, 0, 40),
+        Name = "TitleBar",
+        Parent = mainFrame,
+        BackgroundColor3 = defaults.AccentColor,
+        Size = UDim2.new(1, 0, 0, 50),
         BorderSizePixel = 0,
     })
-    local titleBarCorner = self:Create("UICorner", {
-        CornerRadius = UDim.new(0, 8),
+
+    -- UICorner for title bar
+    local titleCorner = self:Create("UICorner", {
         Parent = titleBar,
+        CornerRadius = UDim.new(0, 15),
     })
-    titleBarCorner.Name = "TitleBarCorner"
 
     -- Title Label
     local titleLabel = self:Create("TextLabel", {
+        Name = "TitleLabel",
         Parent = titleBar,
-        Text = options.text,
-        TextColor3 = options.textColor,
-        Font = options.font,
-        TextSize = 20,
         BackgroundTransparency = 1,
         Size = UDim2.new(1, -100, 1, 0),
-        Position = UDim2.new(0, 10, 0, 0),
+        Position = UDim2.new(0, 20, 0, 0),
+        Text = title,
+        TextColor3 = defaults.TextColor,
+        Font = defaults.Font,
+        TextSize = 24,
         TextXAlignment = Enum.TextXAlignment.Left,
     })
 
     -- Close Button
     local closeButton = self:Create("TextButton", {
+        Name = "CloseButton",
         Parent = titleBar,
-        Text = "X",
-        TextColor3 = Color3.fromRGB(255, 85, 85),
-        Font = options.font,
-        TextSize = 24,
         BackgroundTransparency = 1,
-        Size = UDim2.new(0, 40, 1, 0),
+        Size = UDim2.new(0, 50, 1, 0),
         Position = UDim2.new(1, -50, 0, 0),
-        AutoButtonColor = false,
-    })
-    closeButton.MouseButton1Click:Connect(function()
-        windowFrame:Destroy()
-    end)
-
-    -- Minimize Button
-    local minimizeButton = self:Create("TextButton", {
-        Parent = titleBar,
-        Text = "_",
-        TextColor3 = options.textColor,
-        Font = options.font,
+        Text = "X",
+        TextColor3 = Color3.fromRGB(255, 69, 0), -- Orange Red
+        Font = defaults.Font,
         TextSize = 24,
-        BackgroundTransparency = 1,
-        Size = UDim2.new(0, 40, 1, 0),
-        Position = UDim2.new(1, -90, 0, 0),
-        AutoButtonColor = false,
     })
-    local isMinimized = false
-    minimizeButton.MouseButton1Click:Connect(function()
-        isMinimized = not isMinimized
-        local targetSize = isMinimized and UDim2.new(1, 0, 0, 0) or UDim2.new(1, 0, 0, windowContent.AbsoluteSize.Y)
-        windowContent.Visible = not isMinimized
-        tweenService:Create(windowFrame, TweenInfo.new(0.3), { Size = targetSize }):Play()
+
+    closeButton.MouseButton1Click:Connect(function()
+        screenGui:Destroy()
     end)
 
-    -- Window Content
-    local windowContent = self:Create("Frame", {
-        Parent = windowFrame,
-        BackgroundTransparency = 1,
-        Position = UDim2.new(0, 0, 0, 40),
-        Size = UDim2.new(1, 0, 1, -40),
-        ClipsDescendants = true,
+    -- Content Frame
+    local contentFrame = self:Create("Frame", {
+        Name = "ContentFrame",
+        Parent = mainFrame,
+        BackgroundColor3 = defaults.BackgroundColor,
+        Size = UDim2.new(1, 0, 1, -50),
+        Position = UDim2.new(0, 0, 0, 50),
+        BorderSizePixel = 0,
     })
 
+    -- UICorner for content frame
+    local contentCorner = self:Create("UICorner", {
+        Parent = contentFrame,
+        CornerRadius = UDim.new(0, 15),
+    })
+
+    -- UIListLayout for content organization
     local contentLayout = self:Create("UIListLayout", {
-        Parent = windowContent,
+        Parent = contentFrame,
         SortOrder = Enum.SortOrder.LayoutOrder,
         Padding = UDim.new(0, 10),
     })
 
+    -- UIPadding for content padding
     local contentPadding = self:Create("UIPadding", {
-        Parent = windowContent,
-        PaddingLeft = UDim.new(0, 10),
-        PaddingTop = UDim.new(0, 10),
+        Parent = contentFrame,
+        PaddingLeft = UDim.new(0, 20),
+        PaddingTop = UDim.new(0, 20),
+        PaddingRight = UDim.new(0, 20),
+        PaddingBottom = UDim.new(0, 20),
     })
 
-    -- Drag Functionality
-    dragger.new(titleBar)
+    -- Make the window draggable
+    local dragging = false
+    local dragInput, mousePos, framePos
 
-    -- Update Window Size
-    local function updateWindowSize()
-        local contentSize = contentLayout.AbsoluteContentSize.Y + 20
-        windowFrame.Size = UDim2.new(0, windowWidth, 0, 40 + contentSize)
-        windowContent.Size = UDim2.new(1, 0, 0, contentSize)
+    titleBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            mousePos = input.Position
+            framePos = mainFrame.Position
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    titleBar.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            dragInput = input
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - mousePos
+            mainFrame.Position = UDim2.new(
+                framePos.X.Scale,
+                framePos.X.Offset + delta.X,
+                framePos.Y.Scale,
+                framePos.Y.Offset + delta.Y
+            )
+        end
+    end)
+
+    -- Function to adjust the main frame size based on content
+    local function updateSize()
+        local contentSize = contentLayout.AbsoluteContentSize.Y + contentPadding.PaddingTop.Offset + contentPadding.PaddingBottom.Offset
+        mainFrame.Size = UDim2.new(0, 400, 0, 50 + contentSize)
     end
 
-    contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateWindowSize)
-    updateWindowSize()
+    contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(updateSize)
+    updateSize()
 
-    -- Window Methods
-    local window = {}
-    window.AddLabel = function(self, text)
+    -- Methods to add elements to the window
+
+    function window:AddLabel(text)
         local label = library:Create("TextLabel", {
-            Parent = windowContent,
-            Text = text,
-            TextColor3 = options.textColor,
-            Font = options.font,
-            TextSize = 18,
+            Parent = contentFrame,
             BackgroundTransparency = 1,
-            Size = UDim2.new(1, -20, 0, 30),
+            Size = UDim2.new(1, 0, 0, 30),
+            Text = text,
+            TextColor3 = defaults.TextColor,
+            Font = defaults.Font,
+            TextSize = 20,
             TextXAlignment = Enum.TextXAlignment.Left,
-            LayoutOrder = self.count,
+            LayoutOrder = #contentFrame:GetChildren(),
         })
-        self.count = self.count + 1
-        updateWindowSize()
+        updateSize()
         return label
     end
 
-    window.AddButton = function(self, text, callback)
+    function window:AddButton(text, callback)
         local button = library:Create("TextButton", {
-            Parent = windowContent,
+            Parent = contentFrame,
+            BackgroundColor3 = defaults.ButtonColor,
+            Size = UDim2.new(1, 0, 0, 40),
             Text = text,
-            TextColor3 = options.textColor,
-            Font = options.font,
-            TextSize = 18,
-            BackgroundColor3 = options.accentColor,
-            Size = UDim2.new(1, -20, 0, 40),
-            AutoButtonColor = false,
-            LayoutOrder = self.count,
+            TextColor3 = defaults.TextColor,
+            Font = defaults.Font,
+            TextSize = 20,
+            LayoutOrder = #contentFrame:GetChildren(),
         })
         local buttonCorner = self:Create("UICorner", {
-            CornerRadius = UDim.new(0, 6),
             Parent = button,
+            CornerRadius = UDim.new(0, 10),
         })
         button.MouseButton1Click:Connect(callback)
-        self.count = self.count + 1
-        updateWindowSize()
+        updateSize()
         return button
     end
 
-    window.AddToggle = function(self, text, callback)
+    function window:AddToggle(text, defaultState, callback)
+        defaultState = defaultState or false
+        local toggle = {}
         local toggleFrame = library:Create("Frame", {
-            Parent = windowContent,
+            Parent = contentFrame,
             BackgroundTransparency = 1,
-            Size = UDim2.new(1, -20, 0, 40),
-            LayoutOrder = self.count,
+            Size = UDim2.new(1, 0, 0, 40),
+            LayoutOrder = #contentFrame:GetChildren(),
         })
         local toggleLabel = library:Create("TextLabel", {
             Parent = toggleFrame,
-            Text = text,
-            TextColor3 = options.textColor,
-            Font = options.font,
-            TextSize = 18,
             BackgroundTransparency = 1,
-            Size = UDim2.new(0.7, 0, 1, 0),
+            Size = UDim2.new(0.8, 0, 1, 0),
+            Text = text,
+            TextColor3 = defaults.TextColor,
+            Font = defaults.Font,
+            TextSize = 20,
             TextXAlignment = Enum.TextXAlignment.Left,
         })
         local toggleButton = library:Create("TextButton", {
             Parent = toggleFrame,
-            Text = "OFF",
-            TextColor3 = Color3.fromRGB(255, 85, 85),
-            Font = options.font,
-            TextSize = 18,
-            BackgroundColor3 = options.backgroundColor,
-            Size = UDim2.new(0.3, -10, 1, 0),
-            Position = UDim2.new(0.7, 10, 0, 0),
-            AutoButtonColor = false,
+            BackgroundColor3 = defaultState and Color3.fromRGB(0, 255, 127) or Color3.fromRGB(220, 20, 60),
+            Size = UDim2.new(0.2, -10, 1, 0),
+            Position = UDim2.new(0.8, 10, 0, 0),
+            Text = defaultState and "ON" or "OFF",
+            TextColor3 = defaults.TextColor,
+            Font = defaults.Font,
+            TextSize = 20,
         })
         local toggleButtonCorner = self:Create("UICorner", {
-            CornerRadius = UDim.new(0, 6),
             Parent = toggleButton,
+            CornerRadius = UDim.new(0, 10),
         })
-        local toggled = false
+        toggle.state = defaultState
         toggleButton.MouseButton1Click:Connect(function()
-            toggled = not toggled
-            toggleButton.Text = toggled and "ON" or "OFF"
-            toggleButton.TextColor3 = toggled and Color3.fromRGB(85, 255, 85) or Color3.fromRGB(255, 85, 85)
-            callback(toggled)
+            toggle.state = not toggle.state
+            toggleButton.Text = toggle.state and "ON" or "OFF"
+            toggleButton.BackgroundColor3 = toggle.state and Color3.fromRGB(0, 255, 127) or Color3.fromRGB(220, 20, 60)
+            if callback then callback(toggle.state) end
         end)
-        self.count = self.count + 1
-        updateWindowSize()
-        return toggleButton
+        updateSize()
+        return toggle
     end
 
-    window.AddTextBox = function(self, placeholder, callback)
+    function window:AddTextBox(placeholder, callback)
         local textBox = library:Create("TextBox", {
-            Parent = windowContent,
-            PlaceholderText = placeholder,
+            Parent = contentFrame,
+            BackgroundColor3 = defaults.ButtonColor,
+            Size = UDim2.new(1, 0, 0, 40),
             Text = "",
-            TextColor3 = options.textColor,
-            Font = options.font,
-            TextSize = 18,
-            BackgroundColor3 = options.backgroundColor,
-            Size = UDim2.new(1, -20, 0, 40),
+            PlaceholderText = placeholder,
+            TextColor3 = defaults.TextColor,
+            Font = defaults.Font,
+            TextSize = 20,
             ClearTextOnFocus = false,
-            LayoutOrder = self.count,
+            LayoutOrder = #contentFrame:GetChildren(),
         })
         local textBoxCorner = self:Create("UICorner", {
-            CornerRadius = UDim.new(0, 6),
             Parent = textBox,
+            CornerRadius = UDim.new(0, 10),
         })
         textBox.FocusLost:Connect(function(enterPressed)
-            if enterPressed then
+            if enterPressed and callback then
                 callback(textBox.Text)
             end
         end)
-        self.count = self.count + 1
-        updateWindowSize()
+        updateSize()
         return textBox
     end
 
-    window.AddDropdown = function(self, items, callback)
-        local dropdownOpen = false
-        local selectedItem = items[1]
+    function window:AddDropdown(options, callback)
+        local dropdown = {}
+        dropdown.options = options or {}
+        dropdown.currentOption = dropdown.options[1] or ""
+
         local dropdownFrame = library:Create("Frame", {
-            Parent = windowContent,
+            Parent = contentFrame,
             BackgroundTransparency = 1,
-            Size = UDim2.new(1, -20, 0, 40),
-            LayoutOrder = self.count,
-        })
-        local dropdownButton = library:Create("TextButton", {
-            Parent = dropdownFrame,
-            Text = selectedItem,
-            TextColor3 = options.textColor,
-            Font = options.font,
-            TextSize = 18,
-            BackgroundColor3 = options.backgroundColor,
-            Size = UDim2.new(1, 0, 1, 0),
-            AutoButtonColor = false,
-        })
-        local dropdownButtonCorner = self:Create("UICorner", {
-            CornerRadius = UDim.new(0, 6),
-            Parent = dropdownButton,
-        })
-        local dropdownIcon = self:Create("ImageLabel", {
-            Parent = dropdownButton,
-            Image = "rbxassetid://3926305904",
-            ImageRectOffset = Vector2.new(964, 284),
-            ImageRectSize = Vector2.new(36, 36),
-            BackgroundTransparency = 1,
-            Size = UDim2.new(0, 24, 0, 24),
-            Position = UDim2.new(1, -30, 0.5, -12),
+            Size = UDim2.new(1, 0, 0, 40),
+            LayoutOrder = #contentFrame:GetChildren(),
         })
 
-        local dropdownListFrame = library:Create("ScrollingFrame", {
+        local dropdownButton = library:Create("TextButton", {
             Parent = dropdownFrame,
-            BackgroundColor3 = options.backgroundColor,
+            BackgroundColor3 = defaults.ButtonColor,
+            Size = UDim2.new(1, 0, 1, 0),
+            Text = dropdown.currentOption,
+            TextColor3 = defaults.TextColor,
+            Font = defaults.Font,
+            TextSize = 20,
+        })
+        local dropdownButtonCorner = self:Create("UICorner", {
+            Parent = dropdownButton,
+            CornerRadius = UDim.new(0, 10),
+        })
+
+        local dropdownListFrame = library:Create("Frame", {
+            Parent = dropdownFrame,
+            BackgroundColor3 = defaults.ButtonColor,
             Size = UDim2.new(1, 0, 0, 0),
             Position = UDim2.new(0, 0, 1, 0),
-            BorderSizePixel = 0,
             ClipsDescendants = true,
-            ScrollBarThickness = 4,
-            CanvasSize = UDim2.new(0, 0, 0, 0),
             Visible = false,
-            ZIndex = 2,
         })
         local dropdownListCorner = self:Create("UICorner", {
-            CornerRadius = UDim.new(0, 6),
             Parent = dropdownListFrame,
+            CornerRadius = UDim.new(0, 10),
         })
+
         local dropdownListLayout = self:Create("UIListLayout", {
             Parent = dropdownListFrame,
             SortOrder = Enum.SortOrder.LayoutOrder,
             Padding = UDim.new(0, 5),
         })
-        local dropdownListPadding = self:Create("UIPadding", {
-            Parent = dropdownListFrame,
-            PaddingTop = UDim.new(0, 5),
-            PaddingBottom = UDim.new(0, 5),
-            PaddingLeft = UDim.new(0, 5),
-            PaddingRight = UDim.new(0, 5),
-        })
 
         local function refreshDropdown()
-            dropdownListFrame:ClearAllChildren()
-            dropdownListLayout.Parent = dropdownListFrame
-            dropdownListPadding.Parent = dropdownListFrame
-            dropdownListCorner.Parent = dropdownListFrame
+            for _, child in pairs(dropdownListFrame:GetChildren()) do
+                if child:IsA("TextButton") then
+                    child:Destroy()
+                end
+            end
 
-            for i, item in ipairs(items) do
-                local itemButton = library:Create("TextButton", {
+            for i, option in ipairs(dropdown.options) do
+                local optionButton = library:Create("TextButton", {
                     Parent = dropdownListFrame,
-                    Text = item,
-                    TextColor3 = options.textColor,
-                    Font = options.font,
-                    TextSize = 18,
-                    BackgroundColor3 = options.backgroundColor,
-                    Size = UDim2.new(1, -10, 0, 40),
-                    AutoButtonColor = false,
-                    LayoutOrder = i,
-                    ZIndex = 2,
+                    BackgroundColor3 = defaults.ButtonColor,
+                    Size = UDim2.new(1, 0, 0, 40),
+                    Text = option,
+                    TextColor3 = defaults.TextColor,
+                    Font = defaults.Font,
+                    TextSize = 20,
                 })
-                local itemButtonCorner = self:Create("UICorner", {
-                    CornerRadius = UDim.new(0, 6),
-                    Parent = itemButton,
+                local optionButtonCorner = self:Create("UICorner", {
+                    Parent = optionButton,
+                    CornerRadius = UDim.new(0, 10),
                 })
-                itemButton.MouseButton1Click:Connect(function()
-                    selectedItem = item
-                    dropdownButton.Text = selectedItem
-                    callback(selectedItem)
+                optionButton.MouseButton1Click:Connect(function()
+                    dropdown.currentOption = option
+                    dropdownButton.Text = option
                     dropdownListFrame.Visible = false
-                    dropdownOpen = false
+                    dropdownListFrame.Size = UDim2.new(1, 0, 0, 0)
+                    if callback then callback(option) end
                 end)
             end
-            dropdownListFrame.CanvasSize = UDim2.new(0, 0, 0, dropdownListLayout.AbsoluteContentSize.Y + 10)
+            dropdownListFrame.Size = UDim2.new(1, 0, 0, #dropdown.options * 45)
         end
-        refreshDropdown()
 
         dropdownButton.MouseButton1Click:Connect(function()
-            dropdownOpen = not dropdownOpen
-            dropdownListFrame.Visible = dropdownOpen
-            if dropdownOpen then
-                tweenService:Create(dropdownListFrame, TweenInfo.new(0.3), { Size = UDim2.new(1, 0, 0, 200) }):Play()
-            else
-                tweenService:Create(dropdownListFrame, TweenInfo.new(0.3), { Size = UDim2.new(1, 0, 0, 0) }):Play()
-            end
+            dropdownListFrame.Visible = not dropdownListFrame.Visible
         end)
 
-        inputService.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 and dropdownOpen then
-                local mouseLocation = inputService:GetMouseLocation()
-                local guiInset = game:GetService("GuiService"):GetGuiInset()
-                local relativePosition = mouseLocation - guiInset
-                if not dropdownListFrame.AbsolutePosition or not dropdownListFrame.AbsoluteSize then
-                    return
-                end
-                local framePosition = dropdownListFrame.AbsolutePosition
-                local frameSize = dropdownListFrame.AbsoluteSize
-                if relativePosition.X < framePosition.X or relativePosition.X > framePosition.X + frameSize.X
-                    or relativePosition.Y < framePosition.Y or relativePosition.Y > framePosition.Y + frameSize.Y then
-                    dropdownListFrame.Visible = false
-                    dropdownOpen = false
-                end
-            end
-        end)
-
-        self.count = self.count + 1
-        updateWindowSize()
-        return {
-            Refresh = function(newItems)
-                items = newItems
-                refreshDropdown()
-            end,
-        }
+        refreshDropdown()
+        updateSize()
+        return dropdown
     end
 
     return window
