@@ -1,0 +1,211 @@
+local library = { windowcount = 0 }
+local dragger, resizer = {}, {}
+
+-- Maus und Services definieren
+local mouse = game:GetService("Players").LocalPlayer:GetMouse()
+local inputService = game:GetService('UserInputService')
+local heartbeat = game:GetService("RunService").Heartbeat
+
+-- Funktion für Draggen eines Frames
+function dragger.new(frame)
+    local s, event = pcall(function() return frame.MouseEnter end)
+    if s then
+        frame.Active = true
+        event:Connect(function()
+            local input = frame.InputBegan:Connect(function(key)
+                if key.UserInputType == Enum.UserInputType.MouseButton1 or key.UserInputType == Enum.UserInputType.Touch then
+                    local objectPosition = Vector2.new(mouse.X - frame.AbsolutePosition.X, mouse.Y - frame.AbsolutePosition.Y)
+                    while heartbeat:Wait() and inputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) do
+                        frame:TweenPosition(
+                            UDim2.new(0, mouse.X - objectPosition.X + (frame.Size.X.Offset * frame.AnchorPoint.X), 
+                            0, mouse.Y - objectPosition.Y + (frame.Size.Y.Offset * frame.AnchorPoint.Y)), 
+                            'Out', 'Quad', 0.1, true
+                        )
+                    end
+                end
+            end)
+
+            local leave
+            leave = frame.MouseLeave:Connect(function()
+                input:Disconnect()
+                leave:Disconnect()
+            end)
+        end)
+    end
+end
+
+-- Funktion für Resizing
+function resizer.new(p, s)
+    p:GetPropertyChangedSignal('AbsoluteSize'):Connect(function()
+        s.Size = UDim2.new(s.Size.X.Scale, s.Size.X.Offset, s.Size.Y.Scale, p.AbsoluteSize.Y)
+    end)
+end
+
+-- Standardeinstellungen für Farben
+local defaults = {
+    txtcolor = Color3.fromRGB(255, 255, 255),
+    underline = Color3.fromRGB(0, 255, 140),
+    barcolor = Color3.fromRGB(40, 40, 40),
+    bgcolor = Color3.fromRGB(30, 30, 30),
+}
+
+-- Funktion zum Erstellen von UI-Elementen
+function library:Create(class, props)
+    local object = Instance.new(class)
+    for i, prop in next, props do
+        if i ~= "Parent" then object[i] = prop end
+    end
+    object.Parent = props.Parent
+    return object
+end
+
+-- Funktion zum Erstellen eines Fensters
+function library:CreateWindow(options)
+    assert(options.text, "Name fehlt")
+    local window = { count = 0, toggles = {}, closed = false }
+    options = options or {}
+    setmetatable(options, {__index = defaults})
+    
+    self.windowcount = self.windowcount + 1
+    library.gui = library.gui or self:Create("ScreenGui", {Name = "UILibrary", Parent = game:GetService("CoreGui")})
+    
+    -- Haupt-Frame des Fensters
+    window.frame = self:Create("Frame", {
+        Name = options.text,
+        Parent = self.gui,
+        Active = true,
+        BackgroundTransparency = 0,
+        Size = UDim2.new(0, 190, 0, 30),
+        Position = UDim2.new(0, (15 + ((200 * self.windowcount) - 200)), 0, 15),
+        BackgroundColor3 = options.barcolor,
+        BorderSizePixel = 0,
+    })
+
+    -- Rahmen und Container hinzufügen
+    window.background = self:Create('Frame', {
+        Name = 'Background',
+        Parent = window.frame,
+        BackgroundColor3 = options.bgcolor,
+        Position = UDim2.new(0, 0, 1, 0),
+        Size = UDim2.new(1, 0, 0, 25),
+        BorderSizePixel = 0,
+        ClipsDescendants = true,
+    })
+
+    -- Weitere UI-Elemente
+    window.container = self:Create('Frame', {
+        Name = 'Container',
+        Parent = window.frame,
+        BackgroundColor3 = options.bgcolor,
+        Position = UDim2.new(0, 0, 1, 0),
+        Size = UDim2.new(1, 0, 0, 25),
+        BorderSizePixel = 0,
+        ClipsDescendants = true,
+    })
+
+    -- UI-Layout und Padding
+    window.organizer = self:Create('UIListLayout', {
+        Name = 'Sorter',
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Parent = window.container,
+    })
+    window.padder = self:Create('UIPadding', {
+        Name = 'Padding',
+        PaddingLeft = UDim.new(0, 10),
+        PaddingTop = UDim.new(0, 5),
+        Parent = window.container,
+    })
+
+    -- Rahmen für Unterstreichen
+    self:Create("Frame", {
+        Name = 'Underline',
+        Size = UDim2.new(1, 0, 0, 1),
+        Position = UDim2.new(0, 0, 1, -1),
+        BackgroundColor3 = options.underline,
+        BorderSizePixel = 0,
+        Parent = window.frame
+    })
+
+    -- Toggle Button
+    local togglebutton = self:Create("TextButton", {
+        Name = 'Toggle',
+        BackgroundTransparency = 1,
+        Position = UDim2.new(1, -25, 0, 0),
+        Size = UDim2.new(0, 25, 1, 0),
+        Text = "-",
+        TextSize = 17,
+        TextColor3 = options.txtcolor,
+        Font = Enum.Font.FredokaOne,
+        Parent = window.frame,
+    })
+
+    togglebutton.MouseButton1Click:Connect(function()
+        window.closed = not window.closed
+        togglebutton.Text = (window.closed and "+" or "-")
+        if window.closed then
+            window:Resize(true, UDim2.new(1, 0, 0, 0))
+        else
+            window:Resize(true)
+        end
+    end)
+
+    -- Fenstertext
+    self:Create("TextLabel", {
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundTransparency = 1,
+        TextColor3 = options.txtcolor,
+        TextSize = 17,
+        Font = Enum.Font.FredokaOne,
+        Text = options.text or "window",
+        Name = "Window",
+        Parent = window.frame,
+    })
+
+    dragger.new(window.frame)
+    resizer.new(window.background, window.container)
+
+    -- Funktionen zum Hinzufügen von Elementen (Toggles, Buttons, Labels)
+    function window:AddToggle(text, callback)
+        self.count = self.count + 1
+        callback = callback or function() end
+
+        local label = library:Create("TextLabel", {
+            Text = text,
+            Size = UDim2.new(1, -10, 0, 20),
+            BackgroundTransparency = 1,
+            TextColor3 = Color3.fromRGB(255, 255, 255),
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextSize = 14,
+            Font = Enum.Font.FredokaOne,
+            Parent = self.container,
+        })
+        
+        -- Togglebutton hinzufügen
+        local button = library:Create("TextButton", {
+            Text = "OFF",
+            TextColor3 = Color3.fromRGB(255, 25, 25),
+            BackgroundTransparency = 1,
+            Position = UDim2.new(1, -25, 0, 0),
+            Size = UDim2.new(0, 25, 1, 0),
+            TextSize = 17,
+            Font = Enum.Font.FredokaOne,
+            Parent = label,
+        })
+
+        button.MouseButton1Click:Connect(function()
+            self.toggles[text] = not self.toggles[text]
+            button.TextColor3 = (self.toggles[text] and Color3.fromRGB(0, 255, 140) or Color3.fromRGB(255, 25, 25))
+            button.Text = (self.toggles[text] and "ON" or "OFF")
+            callback(self.toggles[text])
+        end)
+
+        self:Resize()
+        return button
+    end
+
+    -- Weitere Methoden wie AddBox, AddButton, etc.
+
+    return window
+end
+
+return library
