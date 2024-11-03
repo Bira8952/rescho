@@ -17,27 +17,27 @@ do
         if s then
             frame.Active = true;
 
-            event:Connect(function()
-                local input = frame.InputBegan:Connect(function(key)
+            event:connect(function()
+                local input = frame.InputBegan:connect(function(key)
                     if key.UserInputType == Enum.UserInputType.MouseButton1 or key.UserInputType == Enum.UserInputType.Touch then
                         local objectPosition = Vector2.new(mouse.X - frame.AbsolutePosition.X, mouse.Y - frame.AbsolutePosition.Y);
-                        while heartbeat:Wait() and inputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) do
-                            frame.Position = UDim2.new(0, mouse.X - objectPosition.X + (frame.Size.X.Offset * frame.AnchorPoint.X), 0, mouse.Y - objectPosition.Y + (frame.Size.Y.Offset * frame.AnchorPoint.Y))
+                        while heartbeat:wait() and inputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) do
+                            frame:TweenPosition(UDim2.new(0, mouse.X - objectPosition.X + (frame.Size.X.Offset * frame.AnchorPoint.X), 0, mouse.Y - objectPosition.Y + (frame.Size.Y.Offset * frame.AnchorPoint.Y)), 'Out', 'Quad', 0.1, true);
                         end
                     end
                 end)
 
                 local leave;
-                leave = frame.MouseLeave:Connect(function()
-                    input:Disconnect();
-                    leave:Disconnect();
+                leave = frame.MouseLeave:connect(function()
+                    input:disconnect();
+                    leave:disconnect();
                 end)
             end)
         end
     end
 
     function resizer.new(p, s)
-        p:GetPropertyChangedSignal('AbsoluteSize'):Connect(function()
+        p:GetPropertyChangedSignal('AbsoluteSize'):connect(function()
             s.Size = UDim2.new(s.Size.X.Scale, s.Size.X.Offset, s.Size.Y.Scale, p.AbsoluteSize.Y);
         end)
     end
@@ -45,11 +45,11 @@ end
 
 local defaults = {
     txtcolor = Color3.fromRGB(255, 255, 255),
-    underline = Color3.fromRGB(0, 122, 204),
-    barcolor = Color3.fromRGB(45, 45, 48),
-    bgcolor = Color3.fromRGB(37, 37, 38),
-    boxcolor = Color3.fromRGB(51, 51, 55),
-    bartextcolor = Color3.fromRGB(255, 255, 255),
+    underline = Color3.fromRGB(0, 122, 204), -- Angenehmes Blau
+    barcolor = Color3.fromRGB(45, 45, 48),   -- Dunkelgrau für die Titelleiste
+    bgcolor = Color3.fromRGB(37, 37, 38),    -- Dunkles Hintergrundgrau
+    boxcolor = Color3.fromRGB(51, 51, 55),   -- Grau für Eingabefelder
+    bartextcolor = Color3.fromRGB(255, 255, 255), -- Weißer Text in der Titelleiste
 }
 
 function library:Create(class, props)
@@ -66,7 +66,7 @@ function library:Create(class, props)
 end
 
 function library:CreateWindow(options)
-    assert(options.text, "no name");
+    assert(options.text, "kein Name angegeben");
     local window = {
         count = 0;
         toggles = {},
@@ -84,14 +84,10 @@ function library:CreateWindow(options)
         Parent = self.gui,
         Active = true,
         BackgroundTransparency = 0,
-        Size = UDim2.new(0, 220, 0, 30),
-        Position = UDim2.new(0, (15 + ((240 * self.windowcount) - 240)), 0, 15),
+        Size = UDim2.new(0, 190, 0, 30),
+        Position = UDim2.new(0, (15 + ((200 * self.windowcount) - 200)), 0, 15),
         BackgroundColor3 = options.barcolor,
         BorderSizePixel = 0;
-    })
-    self:Create('UICorner', {
-        CornerRadius = UDim.new(0, 5),
-        Parent = window.frame,
     })
 
     window.background = self:Create('Frame', {
@@ -103,18 +99,14 @@ function library:CreateWindow(options)
         Size = UDim2.new(1, 0, 0, 25),
         ClipsDescendants = true;
     })
-    self:Create('UICorner', {
-        CornerRadius = UDim.new(0, 5),
-        Parent = window.background,
-    })
 
     window.container = self:Create('Frame', {
         Name = 'Container';
-        Parent = window.background,
+        Parent = window.frame,
         BorderSizePixel = 0;
-        BackgroundTransparency = 1;
         BackgroundColor3 = options.bgcolor,
-        Size = UDim2.new(1, 0, 1, 0),
+        Position = UDim2.new(0, 0, 1, 0),
+        Size = UDim2.new(1, 0, 0, 25),
         ClipsDescendants = true;
     })
 
@@ -130,6 +122,7 @@ function library:CreateWindow(options)
         PaddingTop = UDim.new(0, 5);
         Parent = window.container;
     })
+
     self:Create("Frame", {
         Name = 'Underline';
         Size = UDim2.new(1, 0, 0, 1),
@@ -143,15 +136,15 @@ function library:CreateWindow(options)
         Name = 'Toggle';
         ZIndex = 2,
         BackgroundTransparency = 1;
-        Position = UDim2.new(1, -35, 0, 0),
-        Size = UDim2.new(0, 35, 1, 0),
+        Position = UDim2.new(1, -25, 0, 0),
+        Size = UDim2.new(0, 25, 1, 0),
         Text = "-",
-        TextSize = 18,
+        TextSize = 17,
         TextColor3 = options.txtcolor,
-        Font = Enum.Font.GothamBold;
+        Font = Enum.Font.SourceSansBold;
         Parent = window.frame,
     });
-    togglebutton.MouseButton1Click:Connect(function()
+    togglebutton.MouseButton1Click:connect(function()
         window.closed = not window.closed
         togglebutton.Text = (window.closed and "+" or "-")
         if window.closed then
@@ -162,14 +155,13 @@ function library:CreateWindow(options)
     end)
 
     self:Create("TextLabel", {
-        Size = UDim2.new(1, -40, 1, 0),
+        Size = UDim2.new(1, 0, 1, 0),
         BackgroundTransparency = 1;
         BorderSizePixel = 0;
         TextColor3 = options.bartextcolor,
-        TextSize = 18,
-        Font = Enum.Font.GothamBold;
-        Text = options.text or "Window",
-        TextXAlignment = Enum.TextXAlignment.Left,
+        TextSize = 17,
+        Font = Enum.Font.SourceSansBold;
+        Text = options.text or "Fenster",
         Name = "Window",
         Parent = window.frame,
     })
@@ -205,37 +197,32 @@ function library:CreateWindow(options)
 
         callback = callback or function() end
         local label = library:Create("TextLabel", {
-            Text = text,
-            Size = UDim2.new(1, -10, 0, 25);
+            Text =  text,
+            Size = UDim2.new(1, -10, 0, 20);
             BackgroundTransparency = 1;
             TextColor3 = options.txtcolor;
             TextXAlignment = Enum.TextXAlignment.Left;
             LayoutOrder = self.count;
-            TextSize = 16,
-            Font = Enum.Font.Gotham;
+            TextSize = 14,
+            Font = Enum.Font.SourceSansBold,
             Parent = self.container;
         })
 
         local button = library:Create("TextButton", {
-            Text = "OFF",
-            TextColor3 = Color3.fromRGB(255, 85, 85),
-            BackgroundTransparency = 0;
-            BackgroundColor3 = Color3.fromRGB(60, 60, 60),
-            Position = UDim2.new(1, -60, 0.5, -10),
-            Size = UDim2.new(0, 50, 0, 20),
+            Text = "AUS",
+            TextColor3 = Color3.fromRGB(255, 25, 25),
+            BackgroundTransparency = 1;
+            Position = UDim2.new(1, -35, 0, 0),
+            Size = UDim2.new(0, 35, 1, 0),
             TextSize = 14,
-            Font = Enum.Font.GothamBold,
+            Font = Enum.Font.SourceSansBold,
             Parent = label;
         })
-        self:Create('UICorner', {
-            CornerRadius = UDim.new(0, 5),
-            Parent = button,
-        })
 
-        button.MouseButton1Click:Connect(function()
+        button.MouseButton1Click:connect(function()
             self.toggles[text] = (not self.toggles[text])
-            button.TextColor3 = (self.toggles[text] and Color3.fromRGB(85, 255, 127) or Color3.fromRGB(255, 85, 85))
-            button.Text = (self.toggles[text] and "ON" or "OFF")
+            button.TextColor3 = (self.toggles[text] and Color3.fromRGB(0, 255, 140) or Color3.fromRGB(255, 25, 25))
+            button.Text =(self.toggles[text] and "AN" or "AUS")
 
             callback(self.toggles[text])
         end)
@@ -250,24 +237,20 @@ function library:CreateWindow(options)
 
         local box = library:Create("TextBox", {
             PlaceholderText = text,
-            Size = UDim2.new(1, -10, 0, 25);
-            BackgroundTransparency = 0;
+            Size = UDim2.new(1, -10, 0, 20);
+            BackgroundTransparency = 0.25;
             BackgroundColor3 = options.boxcolor,
-            TextColor3 = options.txtcolor;
-            TextXAlignment = Enum.TextXAlignment.Left;
-            TextSize = 16,
+            TextColor3 = Color3.fromRGB(255, 255, 255);
+            TextXAlignment = Enum.TextXAlignment.Center;
+            TextSize = 14,
             Text = "",
-            Font = Enum.Font.Gotham,
+            Font = Enum.Font.SourceSans,
             LayoutOrder = self.count;
             BorderSizePixel = 0;
             Parent = self.container;
         })
-        self:Create('UICorner', {
-            CornerRadius = UDim.new(0, 5),
-            Parent = box,
-        })
 
-        box.FocusLost:Connect(function(...)
+        box.FocusLost:connect(function(...)
             callback(box, ...)
         end)
 
@@ -280,24 +263,20 @@ function library:CreateWindow(options)
 
         callback = callback or function() end
         local button = library:Create("TextButton", {
-            Text = text,
-            Size = UDim2.new(1, -10, 0, 25);
-            BackgroundTransparency = 0;
+            Text =  text,
+            Size = UDim2.new(1, -10, 0, 20);
+            BackgroundTransparency = 0.25;
             BackgroundColor3 = options.boxcolor,
-            TextColor3 = options.txtcolor;
+            TextColor3 = Color3.fromRGB(255, 255, 255);
             TextXAlignment = Enum.TextXAlignment.Center;
-            TextSize = 16,
-            Font = Enum.Font.GothamBold,
+            TextSize = 14,
+            Font = Enum.Font.SourceSansBold,
             LayoutOrder = self.count;
             BorderSizePixel = 0;
             Parent = self.container;
         })
-        self:Create('UICorner', {
-            CornerRadius = UDim.new(0, 5),
-            Parent = button,
-        })
 
-        button.MouseButton1Click:Connect(callback)
+        button.MouseButton1Click:connect(callback)
         self:Resize()
         return button
     end
@@ -305,16 +284,16 @@ function library:CreateWindow(options)
     function window:AddLabel(text)
         self.count = self.count + 1;
 
-        local tSize = game:GetService('TextService'):GetTextSize(text, 16, Enum.Font.Gotham, Vector2.new(math.huge, math.huge))
+        local tSize = game:GetService('TextService'):GetTextSize(text, 16, Enum.Font.SourceSans, Vector2.new(math.huge, math.huge))
 
         local label = library:Create("TextLabel", {
-            Text = text,
+            Text =  text,
             Size = UDim2.new(1, -10, 0, tSize.Y + 5);
             BackgroundTransparency = 1;
-            TextColor3 = options.txtcolor;
+            TextColor3 = Color3.fromRGB(255, 255, 255);
             TextXAlignment = Enum.TextXAlignment.Left;
-            TextSize = 16,
-            Font = Enum.Font.Gotham,
+            TextSize = 14,
+            Font = Enum.Font.SourceSans,
             LayoutOrder = self.count;
             Parent = self.container;
         })
@@ -323,35 +302,30 @@ function library:CreateWindow(options)
         return label
     end
 
-    function window:AddDropdown(optionsTable, callback)
+    function window:AddDropdown(options, callback)
         self.count = self.count + 1
-        local options = optionsTable or {}
         local default = options[1] or "";
 
         callback = callback or function() end
-        local dropdown = library:Create("TextButton", {
-            Size = UDim2.new(1, -10, 0, 25);
-            BackgroundTransparency = 0;
+        local dropdown = library:Create("TextLabel", {
+            Size = UDim2.new(1, -10, 0, 20);
+            BackgroundTransparency = 0.25;
             BackgroundColor3 = options.boxcolor,
-            TextColor3 = options.txtcolor;
-            TextXAlignment = Enum.TextXAlignment.Left;
-            TextSize = 16,
-            Text = "  " .. default,
-            Font = Enum.Font.Gotham,
-            LayoutOrder = self.count;
+            TextColor3 = Color3.fromRGB(255, 255, 255);
+            TextXAlignment = Enum.TextXAlignment.Center;
+            TextSize = 14,
+            Text = default,
+            Font = Enum.Font.SourceSans,
             BorderSizePixel = 0;
+            LayoutOrder = self.count;
             Parent = self.container;
         })
-        self:Create('UICorner', {
-            CornerRadius = UDim.new(0, 5),
-            Parent = dropdown,
-        })
 
-        local arrow = library:Create("ImageLabel", {
+        local button = library:Create("ImageButton",{
             BackgroundTransparency = 1;
-            Image = 'rbxassetid://7072718362';
-            Size = UDim2.new(0, 16, 0, 16);
-            Position = UDim2.new(1, -25, 0.5, -8);
+            Image = 'rbxassetid://3234893186';
+            Size = UDim2.new(0, 18, 1, 0);
+            Position = UDim2.new(1, -20, 0, 0);
             Parent = dropdown;
         })
 
@@ -375,7 +349,7 @@ function library:CreateWindow(options)
             return c;
         end
 
-        dropdown.MouseButton1Click:Connect(function()
+        button.MouseButton1Click:connect(function()
             if count(options) == 0 then
                 return
             end
@@ -383,23 +357,18 @@ function library:CreateWindow(options)
             if frame then
                 frame:Destroy();
                 frame = nil;
-                return
             end
 
             self.container.ClipsDescendants = false;
 
             frame = library:Create('Frame', {
                 Position = UDim2.new(0, 0, 1, 0);
-                BackgroundColor3 = options.boxcolor;
-                Size = UDim2.new(1, 0, 0, (count(options) * 25));
+                BackgroundColor3 = Color3.fromRGB(0, 255, 255);
+                Size = UDim2.new(0, dropdown.AbsoluteSize.X, 0, (count(options) * 21));
                 BorderSizePixel = 0;
                 Parent = dropdown;
                 ClipsDescendants = true;
                 ZIndex = 2;
-            })
-            self:Create('UICorner', {
-                CornerRadius = UDim.new(0, 5),
-                Parent = frame,
             })
 
             library:Create('UIListLayout', {
@@ -410,30 +379,29 @@ function library:CreateWindow(options)
             for i, option in next, options do
                 local selection = library:Create('TextButton', {
                     Text = option;
-                    BackgroundColor3 = options.boxcolor;
-                    TextColor3 = options.txtcolor;
+                    BackgroundColor3 = Color3.fromRGB(51, 51, 55);
+                    TextColor3 = Color3.fromRGB(255, 255, 255);
                     BorderSizePixel = 0;
-                    TextSize = 16;
-                    Font = Enum.Font.Gotham;
-                    Size = UDim2.new(1, 0, 0, 25);
+                    TextSize = 14;
+                    Font = Enum.Font.SourceSans,
+                    Size = UDim2.new(1, 0, 0, 21);
                     Parent = frame;
                     ZIndex = 2;
                 })
 
-                selection.MouseButton1Click:Connect(function()
-                    dropdown.Text = "  " .. option;
+                selection.MouseButton1Click:connect(function()
+                    dropdown.Text = option;
                     callback(option)
-                    frame:Destroy()
-                    frame = nil
+                    frame.Size = UDim2.new(1, 0, 0, 0);
+                    game:GetService('Debris'):AddItem(frame, 0.1)
                 end)
             end
         end);
 
-        game:GetService('UserInputService').InputBegan:Connect(function(m)
+        game:GetService('UserInputService').InputBegan:connect(function(m)
             if m.UserInputType == Enum.UserInputType.MouseButton1 then
                 if frame and (not isInGui(frame)) then
-                    frame:Destroy()
-                    frame = nil
+                    game:GetService('Debris'):AddItem(frame);
                 end
             end
         end)
@@ -442,15 +410,12 @@ function library:CreateWindow(options)
         self:Resize()
         return {
             Refresh = function(self, array)
-                if frame then
-                    frame:Destroy()
-                    frame = nil
-                end
+                game:GetService('Debris'):AddItem(frame);
                 options = array
-                dropdown.Text = "  " .. options[1];
+                dropdown.Text = options[1];
             end
         }
-    end
+    end;
 
     return window
 end
