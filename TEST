@@ -35,7 +35,7 @@ do
             end)
         end
     end
-
+   
     function resizer.new(p, s)
         p:GetPropertyChangedSignal('AbsoluteSize'):connect(function()
             s.Size = UDim2.new(s.Size.X.Scale, s.Size.X.Offset, s.Size.Y.Scale, p.AbsoluteSize.Y);
@@ -43,12 +43,12 @@ do
     end
 end
 
-
 local defaults = {
-    txtcolor = Color3.fromRGB(255, 255, 255),
-    underline = Color3.fromRGB(0, 255, 140),
-    barcolor = Color3.fromRGB(40, 40, 40),
-    bgcolor = Color3.fromRGB(30, 30, 30),
+    txtcolor = Color3.fromRGB(245, 245, 245), -- Softer white for text
+    underline = Color3.fromRGB(100, 180, 255), -- Cooler blue underline
+    barcolor = Color3.fromRGB(50, 50, 70), -- Darker bar color
+    bgcolor = Color3.fromRGB(40, 40, 55), -- Slightly lighter background
+    boxcolor = Color3.fromRGB(50, 50, 75), -- Darker box color
 }
 
 function library:Create(class, props)
@@ -98,7 +98,7 @@ function library:CreateWindow(options)
         Size = UDim2.new(1, 0, 0, 25),
         ClipsDescendants = true;
     })
-    
+   
     window.container = self:Create('Frame', {
         Name = 'Container';
         Parent = window.frame,
@@ -108,14 +108,13 @@ function library:CreateWindow(options)
         Size = UDim2.new(1, 0, 0, 25),
         ClipsDescendants = true;
     })
-    
+   
     window.organizer = self:Create('UIListLayout', {
         Name = 'Sorter';
-        --Padding = UDim.new(0, 0);
         SortOrder = Enum.SortOrder.LayoutOrder;
         Parent = window.container;
     })
-    
+   
     window.padder = self:Create('UIPadding', {
         Name = 'Padding';
         PaddingLeft = UDim.new(0, 10);
@@ -158,7 +157,6 @@ function library:CreateWindow(options)
         BackgroundTransparency = 1;
         BorderSizePixel = 0;
         TextColor3 = options.txtcolor,
-        TextColor3 = (options.bartextcolor or Color3.fromRGB(255, 255, 255));
         TextSize = 17,
         Font = Enum.Font.FredokaOne;
         Text = options.text or "window",
@@ -184,7 +182,7 @@ function library:CreateWindow(options)
     function window:Resize(tween, change)
         local size = change or getSize()
         self.container.ClipsDescendants = true;
-        
+       
         if tween then
             self.background:TweenSize(size, "Out", "Sine", 0.5, true)
         else
@@ -199,9 +197,8 @@ function library:CreateWindow(options)
         local label = library:Create("TextLabel", {
             Text =  text,
             Size = UDim2.new(1, -10, 0, 20);
-            --Position = UDim2.new(0, 5, 0, ((20 * self.count) - 20) + 5),
             BackgroundTransparency = 1;
-            TextColor3 = Color3.fromRGB(255, 255, 255);
+            TextColor3 = options.txtcolor,
             TextXAlignment = Enum.TextXAlignment.Left;
             LayoutOrder = self.Count;
             TextSize = 14,
@@ -239,10 +236,9 @@ function library:CreateWindow(options)
         local box = library:Create("TextBox", {
             PlaceholderText = text,
             Size = UDim2.new(1, -10, 0, 20);
-            --Position = UDim2.new(0, 5, 0, ((20 * self.count) - 20) + 5),
             BackgroundTransparency = 0.75;
             BackgroundColor3 = options.boxcolor,
-            TextColor3 = Color3.fromRGB(255, 255, 255);
+            TextColor3 = options.txtcolor,
             TextXAlignment = Enum.TextXAlignment.Center;
             TextSize = 14,
             Text = "",
@@ -267,9 +263,8 @@ function library:CreateWindow(options)
         local button = library:Create("TextButton", {
             Text =  text,
             Size = UDim2.new(1, -10, 0, 20);
-            --Position = UDim2.new(0, 5, 0, ((20 * self.count) - 20) + 5),
             BackgroundTransparency = 1;
-            TextColor3 = Color3.fromRGB(255, 255, 255);
+            TextColor3 = options.txtcolor,
             TextXAlignment = Enum.TextXAlignment.Left;
             TextSize = 14,
             Font = Enum.Font.FredokaOne,
@@ -281,10 +276,10 @@ function library:CreateWindow(options)
         self:Resize()
         return button
     end
-    
+   
     function window:AddLabel(text)
         self.count = self.count + 1;
-        
+       
         local tSize = game:GetService('TextService'):GetTextSize(text, 16, Enum.Font.FredokaOne, Vector2.new(math.huge, math.huge))
 
         local button = library:Create("TextLabel", {
@@ -292,7 +287,7 @@ function library:CreateWindow(options)
             Size = UDim2.new(1, -10, 0, tSize.Y + 5);
             TextScaled = false;
             BackgroundTransparency = 1;
-            TextColor3 = Color3.fromRGB(255, 255, 255);
+            TextColor3 = options.txtcolor,
             TextXAlignment = Enum.TextXAlignment.Left;
             TextSize = 14,
             Font = Enum.Font.FredokaOne,
@@ -307,13 +302,13 @@ function library:CreateWindow(options)
     function window:AddDropdown(options, callback)
         self.count = self.count + 1
         local default = options[1] or "";
-        
+       
         callback = callback or function() end
         local dropdown = library:Create("TextLabel", {
             Size = UDim2.new(1, -10, 0, 20);
             BackgroundTransparency = 0.75;
             BackgroundColor3 = options.boxcolor,
-            TextColor3 = Color3.fromRGB(255, 255, 255);
+            TextColor3 = options.txtcolor,
             TextXAlignment = Enum.TextXAlignment.Center;
             TextSize = 14,
             Text = default,
@@ -322,7 +317,7 @@ function library:CreateWindow(options)
             LayoutOrder = self.Count;
             Parent = self.container;
         })
-        
+       
         local button = library:Create("ImageButton",{
             BackgroundTransparency = 1;
             Image = 'rbxassetid://3234893186';
@@ -330,16 +325,16 @@ function library:CreateWindow(options)
             Position = UDim2.new(1, -20, 0, 0);
             Parent = dropdown;
         })
-        
+       
         local frame;
-        
+       
         local function isInGui(frame)
             local mloc = game:GetService('UserInputService'):GetMouseLocation();
             local mouse = Vector2.new(mloc.X, mloc.Y - 36);
-            
+           
             local x1, x2 = frame.AbsolutePosition.X, frame.AbsolutePosition.X + frame.AbsoluteSize.X;
             local y1, y2 = frame.AbsolutePosition.Y, frame.AbsolutePosition.Y + frame.AbsoluteSize.Y;
-
+       
             return (mouse.X >= x1 and mouse.X <= x2) and (mouse.Y >= y1 and mouse.Y <= y2)
         end
 
@@ -350,7 +345,7 @@ function library:CreateWindow(options)
             end
             return c;
         end
-        
+       
         button.MouseButton1Click:connect(function()
             if count(options) == 0 then
                 return
@@ -360,7 +355,7 @@ function library:CreateWindow(options)
                 frame:Destroy();
                 frame = nil;
             end
-            
+           
             self.container.ClipsDescendants = false;
 
             frame = library:Create('Frame', {
@@ -372,7 +367,7 @@ function library:CreateWindow(options)
                 ClipsDescendants = true;
                 ZIndex = 2;
             })
-            
+           
             library:Create('UIListLayout', {
                 Name = 'Layout';
                 Parent = frame;
@@ -381,8 +376,8 @@ function library:CreateWindow(options)
             for i, option in next, options do
                 local selection = library:Create('TextButton', {
                     Text = option;
-                    BackgroundColor3 = Color3.fromRGB(40, 40, 40);
-                    TextColor3 = Color3.fromRGB(255, 255, 255);
+                    BackgroundColor3 = options.barcolor;
+                    TextColor3 = options.txtcolor,
                     BorderSizePixel = 0;
                     TextSize = 14;
                     Font = Enum.Font.FredokaOne;
@@ -390,7 +385,7 @@ function library:CreateWindow(options)
                     Parent = frame;
                     ZIndex = 2;
                 })
-                
+               
                 selection.MouseButton1Click:connect(function()
                     dropdown.Text = option;
                     callback(option)
@@ -407,7 +402,7 @@ function library:CreateWindow(options)
                 end
             end
         end)
-        
+       
         callback(default);
         self:Resize()
         return {
@@ -418,8 +413,7 @@ function library:CreateWindow(options)
             end
         }
     end;
-    
-    
+   
     return window
 end
 
