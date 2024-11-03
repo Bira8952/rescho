@@ -1,340 +1,427 @@
--- Improved GUI Library
+-- Disney-Themed GUI Library
 
 local library = {
-    windowCount = 0,
+    windowcount = 0;
 }
 
-local inputService = game:GetService('UserInputService')
-local runService = game:GetService('RunService')
+local dragger = {};
+local resizer = {};
 
--- Dragger Module
-local dragger = {}
 do
+    local mouse = game:GetService("Players").LocalPlayer:GetMouse();
+    local inputService = game:GetService('UserInputService');
+    local heartbeat = game:GetService("RunService").Heartbeat;
     function dragger.new(frame)
-        local dragging = false
-        local dragInput, mousePos, framePos
+        local s, event = pcall(function()
+            return frame.MouseEnter
+        end)
 
-        frame.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                dragging = true
-                mousePos = input.Position
-                framePos = frame.Position
+        if s then
+            frame.Active = true;
 
-                input.Changed:Connect(function()
-                    if input.UserInputState == Enum.UserInputState.End then
-                        dragging = false
+            event:connect(function()
+                local input = frame.InputBegan:connect(function(key)
+                    if key.UserInputType == Enum.UserInputType.MouseButton1 or key.UserInputType == Enum.UserInputType.Touch then
+                        local objectPosition = Vector2.new(mouse.X - frame.AbsolutePosition.X, mouse.Y - frame.AbsolutePosition.Y);
+                        while heartbeat:wait() and inputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) do
+                            frame:TweenPosition(UDim2.new(0, mouse.X - objectPosition.X + (frame.Size.X.Offset * frame.AnchorPoint.X), 0, mouse.Y - objectPosition.Y + (frame.Size.Y.Offset * frame.AnchorPoint.Y)), 'Out', 'Quad', 0.1, true);
+                        end
                     end
                 end)
-            end
-        end)
 
-        frame.InputChanged:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseMovement then
-                dragInput = input
-            end
-        end)
-
-        inputService.InputChanged:Connect(function(input)
-            if input == dragInput and dragging then
-                local delta = input.Position - mousePos
-                frame.Position = UDim2.new(
-                    framePos.X.Scale,
-                    framePos.X.Offset + delta.X,
-                    framePos.Y.Scale,
-                    framePos.Y.Offset + delta.Y
-                )
-            end
+                local leave;
+                leave = frame.MouseLeave:connect(function()
+                    input:disconnect();
+                    leave:disconnect();
+                end)
+            end)
+        end
+    end
+   
+    function resizer.new(p, s)
+        p:GetPropertyChangedSignal('AbsoluteSize'):connect(function()
+            s.Size = UDim2.new(s.Size.X.Scale, s.Size.X.Offset, s.Size.Y.Scale, p.AbsoluteSize.Y);
         end)
     end
 end
 
--- Library Functions
+local defaults = {
+    txtcolor = Color3.fromRGB(255, 255, 255), -- White text
+    underline = Color3.fromRGB(0, 122, 204), -- Blue underline
+    barcolor = Color3.fromRGB(0, 162, 232), -- Sky blue bar color
+    bgcolor = Color3.fromRGB(224, 224, 224), -- Light gray background
+    boxcolor = Color3.fromRGB(255, 255, 255), -- White box color
+    font = Enum.Font.Cartoon, -- Cartoon font to match Disney style
+}
+
 function library:Create(class, props)
-    local object = Instance.new(class)
-    for prop, value in pairs(props) do
-        object[prop] = value
+    local object = Instance.new(class);
+
+    for i, prop in next, props do
+        if i ~= "Parent" then
+            object[i] = prop;
+        end
     end
-    return object
+
+    object.Parent = props.Parent;
+    return object;
 end
 
 function library:CreateWindow(options)
-    assert(options.text, "Window must have a 'text' property.")
-
+    assert(options.text, "no name");
     local window = {
-        count = 0,
+        count = 0;
         toggles = {},
-        closed = false,
+        closed = false;
     }
 
-    options = setmetatable(options, { __index = {
-        textColor = Color3.fromRGB(245, 245, 245),
-        underlineColor = Color3.fromRGB(100, 180, 255),
-        barColor = Color3.fromRGB(50, 50, 70),
-        backgroundColor = Color3.fromRGB(40, 40, 55),
-        boxColor = Color3.fromRGB(50, 50, 75),
-    }})
+    local options = options or {};
+    setmetatable(options, {__index = defaults})
 
-    self.windowCount = self.windowCount + 1
+    self.windowcount = self.windowcount + 1;
 
-    library.gui = library.gui or self:Create("ScreenGui", {
-        Name = "UILibrary",
-        Parent = game:GetService("CoreGui"),
-        ResetOnSpawn = false,
-    })
-
-    -- Main Window Frame
+    library.gui = library.gui or self:Create("ScreenGui", {Name = "UILibrary", Parent = game:GetService("CoreGui")})
     window.frame = self:Create("Frame", {
-        Name = options.text,
+        Name = options.text;
         Parent = self.gui,
-        BackgroundColor3 = options.barColor,
-        Size = UDim2.new(0, 200, 0, 30),
-        Position = UDim2.new(0, 20 * self.windowCount, 0, 20),
-        BorderSizePixel = 0,
+        Active = true,
+        BackgroundTransparency = 0,
+        Size = UDim2.new(0, 220, 0, 40),
+        Position = UDim2.new(0, (15 + ((240 * self.windowcount) - 240)), 0, 15),
+        BackgroundColor3 = options.barcolor,
+        BorderSizePixel = 0;
     })
 
-    -- Draggable
-    dragger.new(window.frame)
-
-    -- Title Label
-    self:Create("TextLabel", {
+    window.background = self:Create('Frame', {
+        Name = 'Background';
         Parent = window.frame,
-        Size = UDim2.new(1, -30, 1, 0),
-        BackgroundTransparency = 1,
-        Text = options.text,
-        TextColor3 = options.textColor,
-        TextSize = 18,
-        Font = Enum.Font.SourceSansBold,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        PaddingLeft = UDim.new(0, 10),
-    })
-
-    -- Toggle Button
-    local toggleButton = self:Create("TextButton", {
-        Parent = window.frame,
-        Size = UDim2.new(0, 30, 1, 0),
-        Position = UDim2.new(1, -30, 0, 0),
-        BackgroundTransparency = 1,
-        Text = "-",
-        TextColor3 = options.textColor,
-        TextSize = 18,
-        Font = Enum.Font.SourceSansBold,
-    })
-
-    -- Content Frame
-    window.contentFrame = self:Create("Frame", {
-        Parent = window.frame,
-        BackgroundColor3 = options.backgroundColor,
-        Size = UDim2.new(1, 0, 0, 0),
+        BorderSizePixel = 0;
+        BackgroundColor3 = options.bgcolor,
         Position = UDim2.new(0, 0, 1, 0),
-        BorderSizePixel = 0,
-        ClipsDescendants = true,
+        Size = UDim2.new(1, 0, 0, 25),
+        ClipsDescendants = true;
+    })
+   
+    window.container = self:Create('Frame', {
+        Name = 'Container';
+        Parent = window.frame,
+        BorderSizePixel = 0;
+        BackgroundColor3 = options.bgcolor,
+        Position = UDim2.new(0, 0, 1, 0),
+        Size = UDim2.new(1, 0, 0, 25),
+        ClipsDescendants = true;
+    })
+   
+    window.organizer = self:Create('UIListLayout', {
+        Name = 'Sorter';
+        SortOrder = Enum.SortOrder.LayoutOrder;
+        Parent = window.container;
+    })
+   
+    window.padder = self:Create('UIPadding', {
+        Name = 'Padding';
+        PaddingLeft = UDim.new(0, 10);
+        PaddingTop = UDim.new(0, 10);
+        Parent = window.container;
+    })
+    self:Create("Frame", {
+        Name = 'Underline';
+        Size = UDim2.new(1, 0, 0, 2),
+        Position = UDim2.new(0, 0, 1, -2),
+        BorderSizePixel = 0;
+        BackgroundColor3 = options.underline;
+        Parent = window.frame
     })
 
-    -- UIListLayout for content organization
-    local layout = self:Create("UIListLayout", {
-        Parent = window.contentFrame,
-        SortOrder = Enum.SortOrder.LayoutOrder,
-        Padding = UDim.new(0, 5),
-    })
-
-    -- Toggle Content Visibility
-    toggleButton.MouseButton1Click:Connect(function()
+    local togglebutton = self:Create("TextButton", {
+        Name = 'Toggle';
+        ZIndex = 2,
+        BackgroundTransparency = 1;
+        Position = UDim2.new(1, -35, 0, 0),
+        Size = UDim2.new(0, 35, 1, 0),
+        Text = "-",
+        TextSize = 24,
+        TextColor3 = options.txtcolor,
+        Font = options.font;
+        Parent = window.frame,
+    });
+    togglebutton.MouseButton1Click:connect(function()
         window.closed = not window.closed
-        toggleButton.Text = window.closed and "+" or "-"
-        local newSize = window.closed and UDim2.new(1, 0, 0, 0) or UDim2.new(1, 0, 0, layout.AbsoluteContentSize.Y)
-        window.contentFrame:TweenSize(newSize, Enum.EasingDirection.Out, Enum.EasingStyle.Sine, 0.3, true)
-    end)
-
-    -- Update Content Size
-    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        if not window.closed then
-            window.contentFrame:TweenSize(UDim2.new(1, 0, 0, layout.AbsoluteContentSize.Y), Enum.EasingDirection.Out, Enum.EasingStyle.Sine, 0.3, true)
+        togglebutton.Text = (window.closed and "+" or "-")
+        if window.closed then
+            window:Resize(true, UDim2.new(1, 0, 0, 0))
+        else
+            window:Resize(true)
         end
     end)
 
-    -- Add UI Elements Methods
+    self:Create("TextLabel", {
+        Size = UDim2.new(1, -40, 1, 0),
+        BackgroundTransparency = 1;
+        BorderSizePixel = 0;
+        TextColor3 = options.txtcolor,
+        TextSize = 24,
+        Font = options.font;
+        Text = options.text or "Window",
+        Name = "Window",
+        Position = UDim2.new(0, 10, 0, 0),
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = window.frame,
+    })
+
+    do
+        dragger.new(window.frame)
+        resizer.new(window.background, window.container);
+    end
+
+    local function getSize()
+        local ySize = 0;
+        for i, object in next, window.container:GetChildren() do
+            if (not object:IsA('UIListLayout')) and (not object:IsA('UIPadding')) then
+                ySize = ySize + object.AbsoluteSize.Y
+            end
+        end
+        return UDim2.new(1, 0, 0, ySize + 20)
+    end
+
+    function window:Resize(tween, change)
+        local size = change or getSize()
+        self.container.ClipsDescendants = true;
+       
+        if tween then
+            self.background:TweenSize(size, "Out", "Sine", 0.5, true)
+        else
+            self.background.Size = size
+        end
+    end
+
     function window:AddToggle(text, callback)
+        self.count = self.count + 1
+
+        callback = callback or function() end
+        local label = library:Create("TextLabel", {
+            Text =  text,
+            Size = UDim2.new(1, -10, 0, 30);
+            BackgroundTransparency = 1;
+            TextColor3 = options.txtcolor,
+            TextXAlignment = Enum.TextXAlignment.Left;
+            LayoutOrder = self.count;
+            TextSize = 18,
+            Font = options.font,
+            Parent = self.container;
+        })
+
+        local button = library:Create("TextButton", {
+            Text = "OFF",
+            TextColor3 = Color3.fromRGB(255, 0, 0),
+            BackgroundTransparency = 1;
+            Position = UDim2.new(1, -50, 0, 0),
+            Size = UDim2.new(0, 50, 1, 0),
+            TextSize = 18,
+            Font = options.font,
+            Parent = label;
+        })
+
+        button.MouseButton1Click:connect(function()
+            self.toggles[text] = (not self.toggles[text])
+            button.TextColor3 = (self.toggles[text] and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(255, 0, 0))
+            button.Text =(self.toggles[text] and "ON" or "OFF")
+
+            callback(self.toggles[text])
+        end)
+
+        self:Resize()
+        return button
+    end
+
+    function window:AddBox(text, callback)
         self.count = self.count + 1
         callback = callback or function() end
 
-        local toggleFrame = library:Create("Frame", {
-            Parent = window.contentFrame,
-            Size = UDim2.new(1, -20, 0, 30),
-            BackgroundTransparency = 1,
-            LayoutOrder = self.count,
+        local box = library:Create("TextBox", {
+            PlaceholderText = text,
+            Size = UDim2.new(1, -10, 0, 30);
+            BackgroundTransparency = 0.1;
+            BackgroundColor3 = options.boxcolor,
+            TextColor3 = options.txtcolor,
+            TextXAlignment = Enum.TextXAlignment.Center;
+            TextSize = 18,
+            Text = "",
+            Font = options.font,
+            LayoutOrder = self.count;
+            BorderSizePixel = 0;
+            Parent = self.container;
         })
 
-        local label = library:Create("TextLabel", {
-            Parent = toggleFrame,
-            Size = UDim2.new(0.7, 0, 1, 0),
-            BackgroundTransparency = 1,
-            Text = text,
-            TextColor3 = options.textColor,
-            TextSize = 16,
-            Font = Enum.Font.SourceSans,
-            TextXAlignment = Enum.TextXAlignment.Left,
-        })
-
-        local toggleButton = library:Create("TextButton", {
-            Parent = toggleFrame,
-            Size = UDim2.new(0.3, 0, 1, 0),
-            Position = UDim2.new(0.7, 0, 0, 0),
-            BackgroundColor3 = options.boxColor,
-            Text = "OFF",
-            TextColor3 = Color3.fromRGB(255, 0, 0),
-            TextSize = 16,
-            Font = Enum.Font.SourceSansBold,
-        })
-
-        local toggled = false
-        toggleButton.MouseButton1Click:Connect(function()
-            toggled = not toggled
-            toggleButton.Text = toggled and "ON" or "OFF"
-            toggleButton.TextColor3 = toggled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
-            callback(toggled)
+        box.FocusLost:connect(function(...)
+            callback(box.Text, ...)
         end)
+
+        self:Resize()
+        return box
     end
 
     function window:AddButton(text, callback)
         self.count = self.count + 1
-        callback = callback or function() end
 
+        callback = callback or function() end
         local button = library:Create("TextButton", {
-            Parent = window.contentFrame,
-            Size = UDim2.new(1, -20, 0, 30),
-            BackgroundColor3 = options.boxColor,
-            Text = text,
-            TextColor3 = options.textColor,
-            TextSize = 16,
-            Font = Enum.Font.SourceSansBold,
-            LayoutOrder = self.count,
+            Text =  text,
+            Size = UDim2.new(1, -10, 0, 30);
+            BackgroundTransparency = 0.1;
+            BackgroundColor3 = options.boxcolor,
+            TextColor3 = options.txtcolor,
+            TextXAlignment = Enum.TextXAlignment.Center;
+            TextSize = 18,
+            Font = options.font,
+            LayoutOrder = self.count;
+            Parent = self.container;
         })
 
-        button.MouseButton1Click:Connect(callback)
+        button.MouseButton1Click:connect(callback)
+        self:Resize()
+        return button
     end
-
+   
     function window:AddLabel(text)
-        self.count = self.count + 1
+        self.count = self.count + 1;
+       
+        local tSize = game:GetService('TextService'):GetTextSize(text, 18, options.font, Vector2.new(window.container.AbsoluteSize.X - 20, math.huge))
 
         local label = library:Create("TextLabel", {
-            Parent = window.contentFrame,
-            Size = UDim2.new(1, -20, 0, 30),
-            BackgroundTransparency = 1,
-            Text = text,
-            TextColor3 = options.textColor,
-            TextSize = 16,
-            Font = Enum.Font.SourceSans,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            LayoutOrder = self.count,
+            Text =  text,
+            Size = UDim2.new(1, -10, 0, tSize.Y + 10);
+            TextScaled = false;
+            BackgroundTransparency = 1;
+            TextColor3 = options.txtcolor,
+            TextXAlignment = Enum.TextXAlignment.Left;
+            TextSize = 18,
+            Font = options.font,
+            LayoutOrder = self.count;
+            Parent = self.container;
         })
+
+        self:Resize()
+        return label
     end
 
-    function window:AddTextBox(placeholder, callback)
+    function window:AddDropdown(optionsList, callback)
         self.count = self.count + 1
+        local default = optionsList[1] or "";
+       
         callback = callback or function() end
-
-        local textBox = library:Create("TextBox", {
-            Parent = window.contentFrame,
-            Size = UDim2.new(1, -20, 0, 30),
-            BackgroundColor3 = options.boxColor,
-            PlaceholderText = placeholder,
-            Text = "",
-            TextColor3 = options.textColor,
-            TextSize = 16,
-            Font = Enum.Font.SourceSans,
-            LayoutOrder = self.count,
-        })
-
-        textBox.FocusLost:Connect(function(enterPressed)
-            if enterPressed then
-                callback(textBox.Text)
-            end
-        end)
-    end
-
-    function window:AddDropdown(items, default, callback)
-        self.count = self.count + 1
-        callback = callback or function() end
-        default = default or items[1] or ""
-
-        local dropdownFrame = library:Create("Frame", {
-            Parent = window.contentFrame,
-            Size = UDim2.new(1, -20, 0, 30),
-            BackgroundColor3 = options.boxColor,
-            LayoutOrder = self.count,
-        })
-
-        local selectedItem = library:Create("TextLabel", {
-            Parent = dropdownFrame,
-            Size = UDim2.new(1, -30, 1, 0),
-            BackgroundTransparency = 1,
+        local dropdown = library:Create("TextButton", {
+            Size = UDim2.new(1, -10, 0, 30);
+            BackgroundTransparency = 0.1;
+            BackgroundColor3 = options.boxcolor,
+            TextColor3 = options.txtcolor,
+            TextXAlignment = Enum.TextXAlignment.Center;
+            TextSize = 18,
             Text = default,
-            TextColor3 = options.textColor,
-            TextSize = 16,
-            Font = Enum.Font.SourceSans,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            PaddingLeft = UDim.new(0, 5),
+            Font = options.font,
+            BorderSizePixel = 0;
+            LayoutOrder = self.count;
+            Parent = self.container;
         })
-
-        local dropButton = library:Create("ImageButton", {
-            Parent = dropdownFrame,
-            Size = UDim2.new(0, 24, 0, 24),
-            Position = UDim2.new(1, -28, 0.5, -12),
-            BackgroundTransparency = 1,
-            Image = "rbxassetid://6031091004", -- Down arrow icon
+       
+        local arrow = library:Create("ImageLabel", {
+            BackgroundTransparency = 1;
+            Image = 'rbxassetid://7072718362'; -- A suitable down arrow icon
+            Size = UDim2.new(0, 24, 0, 24);
+            Position = UDim2.new(1, -30, 0.5, -12);
+            Parent = dropdown;
         })
+       
+        local frame;
+       
+        local function isInGui(frame)
+            local mloc = game:GetService('UserInputService'):GetMouseLocation();
+            local mouse = Vector2.new(mloc.X, mloc.Y - 36);
+           
+            local x1, x2 = frame.AbsolutePosition.X, frame.AbsolutePosition.X + frame.AbsoluteSize.X;
+            local y1, y2 = frame.AbsolutePosition.Y, frame.AbsolutePosition.Y + frame.AbsoluteSize.Y;
+       
+            return (mouse.X >= x1 and mouse.X <= x2) and (mouse.Y >= y1 and mouse.Y <= y2)
+        end
 
-        local dropdownList
-
-        local function toggleDropdown()
-            if dropdownList then
-                dropdownList:Destroy()
-                dropdownList = nil
+        local function count(t)
+            local c = 0;
+            for i, v in next, t do
+                c = c + 1
+            end
+            return c;
+        end
+       
+        dropdown.MouseButton1Click:connect(function()
+            if count(optionsList) == 0 then
                 return
             end
 
-            dropdownList = library:Create("ScrollingFrame", {
-                Parent = dropdownFrame,
-                Position = UDim2.new(0, 0, 1, 0),
-                Size = UDim2.new(1, 0, 0, 100),
-                BackgroundColor3 = options.backgroundColor,
-                BorderSizePixel = 0,
-                CanvasSize = UDim2.new(0, 0, 0, #items * 30),
-                ScrollBarThickness = 4,
-                ClipsDescendants = true,
-                ZIndex = 2,
+            if frame then
+                frame:Destroy();
+                frame = nil;
+            end
+           
+            self.container.ClipsDescendants = false;
+
+            frame = library:Create('Frame', {
+                Position = UDim2.new(0, 0, 1, 0);
+                BackgroundColor3 = options.boxcolor;
+                Size = UDim2.new(1, 0, 0, (count(optionsList) * 35));
+                BorderSizePixel = 0;
+                Parent = dropdown;
+                ClipsDescendants = true;
+                ZIndex = 2;
+            })
+           
+            library:Create('UIListLayout', {
+                Name = 'Layout';
+                Parent = frame;
+                SortOrder = Enum.SortOrder.LayoutOrder;
+                Padding = UDim.new(0, 5);
             })
 
-            local listLayout = library:Create("UIListLayout", {
-                Parent = dropdownList,
-                SortOrder = Enum.SortOrder.LayoutOrder,
-            })
-
-            for index, item in ipairs(items) do
-                local itemButton = library:Create("TextButton", {
-                    Parent = dropdownList,
-                    Size = UDim2.new(1, 0, 0, 30),
-                    BackgroundColor3 = options.boxColor,
-                    Text = item,
-                    TextColor3 = options.textColor,
-                    TextSize = 16,
-                    Font = Enum.Font.SourceSans,
-                    LayoutOrder = index,
-                    ZIndex = 2,
+            for i, option in next, optionsList do
+                local selection = library:Create('TextButton', {
+                    Text = option;
+                    BackgroundColor3 = options.barcolor;
+                    TextColor3 = options.txtcolor,
+                    BorderSizePixel = 0;
+                    TextSize = 18;
+                    Font = options.font;
+                    Size = UDim2.new(1, -10, 0, 30);
+                    LayoutOrder = i;
+                    Parent = frame;
+                    ZIndex = 2;
                 })
-
-                itemButton.MouseButton1Click:Connect(function()
-                    selectedItem.Text = item
-                    callback(item)
-                    dropdownList:Destroy()
-                    dropdownList = nil
+               
+                selection.MouseButton1Click:connect(function()
+                    dropdown.Text = option;
+                    callback(option)
+                    frame:Destroy()
                 end)
             end
-        end
+        end);
 
-        dropButton.MouseButton1Click:Connect(toggleDropdown)
-    end
-
+        game:GetService('UserInputService').InputBegan:connect(function(m)
+            if m.UserInputType == Enum.UserInputType.MouseButton1 then
+                if frame and (not isInGui(frame)) then
+                    frame:Destroy();
+                end
+            end
+        end)
+       
+        callback(default);
+        self:Resize()
+        return {
+            Refresh = function(self, array)
+                if frame then frame:Destroy() end
+                optionsList = array
+                dropdown.Text = optionsList[1];
+            end
+        }
+    end;
+   
     return window
 end
 
