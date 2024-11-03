@@ -60,6 +60,13 @@ function library:Create(class, props)
         end
     end
 
+    -- Adding UICorner to frames for rounded corners
+    if class == "Frame" or class == "TextLabel" or class == "TextButton" or class == "TextBox" then
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 8)  -- Adjust the radius here (8 for medium roundness)
+        corner.Parent = object
+    end
+
     object.Parent = props.Parent;
     return object;
 end
@@ -89,6 +96,11 @@ function library:CreateWindow(options)
         BorderSizePixel = 0;
     })
 
+    -- Adding UICorner to main window frame
+    local frameCorner = Instance.new("UICorner")
+    frameCorner.CornerRadius = UDim.new(0, 8)
+    frameCorner.Parent = window.frame
+
     window.background = self:Create('Frame', {
         Name = 'Background';
         Parent = window.frame,
@@ -98,6 +110,11 @@ function library:CreateWindow(options)
         Size = UDim2.new(1, 0, 0, 25),
         ClipsDescendants = true;
     })
+
+    -- Adding UICorner to the background
+    local backgroundCorner = Instance.new("UICorner")
+    backgroundCorner.CornerRadius = UDim.new(0, 8)
+    backgroundCorner.Parent = window.background
    
     window.container = self:Create('Frame', {
         Name = 'Container';
@@ -108,6 +125,11 @@ function library:CreateWindow(options)
         Size = UDim2.new(1, 0, 0, 25),
         ClipsDescendants = true;
     })
+
+    -- Adding UICorner to the container
+    local containerCorner = Instance.new("UICorner")
+    containerCorner.CornerRadius = UDim.new(0, 8)
+    containerCorner.Parent = window.container
    
     window.organizer = self:Create('UIListLayout', {
         Name = 'Sorter';
@@ -142,6 +164,7 @@ function library:CreateWindow(options)
         Font = Enum.Font.FredokaOne;
         Parent = window.frame,
     });
+
     togglebutton.MouseButton1Click:connect(function()
         window.closed = not window.closed
         togglebutton.Text = (window.closed and "+" or "-")
@@ -317,6 +340,11 @@ function library:CreateWindow(options)
             LayoutOrder = self.Count;
             Parent = self.container;
         })
+
+        -- Adding UICorner to dropdown for rounded corners
+        local dropdownCorner = Instance.new("UICorner")
+        dropdownCorner.CornerRadius = UDim.new(0, 8)
+        dropdownCorner.Parent = dropdown
        
         local button = library:Create("ImageButton",{
             BackgroundTransparency = 1;
