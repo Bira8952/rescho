@@ -60,6 +60,13 @@ function library:Create(class, props)
         end
     end
 
+    -- Adding UICorner to frames for rounded corners
+    if class == "Frame" or class == "TextLabel" or class == "TextButton" or class == "TextBox" then
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 8)  -- Adjust the radius here (8 for medium roundness)
+        corner.Parent = object
+    end
+
     object.Parent = props.Parent;
     return object;
 end
@@ -158,11 +165,6 @@ function library:CreateWindow(options)
         Parent = window.frame,
     });
 
-    -- Adding UICorner to toggle button
-    local toggleButtonCorner = Instance.new("UICorner")
-    toggleButtonCorner.CornerRadius = UDim.new(0, 8)
-    toggleButtonCorner.Parent = togglebutton
-
     togglebutton.MouseButton1Click:connect(function()
         window.closed = not window.closed
         togglebutton.Text = (window.closed and "+" or "-")
@@ -238,11 +240,6 @@ function library:CreateWindow(options)
             Parent = label;
         })
 
-        -- Adding UICorner to toggle button
-        local toggleButtonCorner = Instance.new("UICorner")
-        toggleButtonCorner.CornerRadius = UDim.new(0, 8)
-        toggleButtonCorner.Parent = button
-
         button.MouseButton1Click:connect(function()
             self.toggles[text] = (not self.toggles[text])
             button.TextColor3 = (self.toggles[text] and Color3.fromRGB(0, 255, 140) or Color3.fromRGB(255, 25, 25))
@@ -274,11 +271,6 @@ function library:CreateWindow(options)
             Parent = self.container;
         })
 
-        -- Adding UICorner to text box
-        local boxCorner = Instance.new("UICorner")
-        boxCorner.CornerRadius = UDim.new(0, 8)
-        boxCorner.Parent = box
-
         box.FocusLost:connect(function(...)
             callback(box, ...)
         end)
@@ -303,11 +295,6 @@ function library:CreateWindow(options)
             Parent = self.container;
         })
 
-        -- Adding UICorner to button
-        local buttonCorner = Instance.new("UICorner")
-        buttonCorner.CornerRadius = UDim.new(0, 8)
-        buttonCorner.Parent = button
-
         button.MouseButton1Click:connect(callback)
         self:Resize()
         return button
@@ -318,7 +305,7 @@ function library:CreateWindow(options)
        
         local tSize = game:GetService('TextService'):GetTextSize(text, 16, Enum.Font.FredokaOne, Vector2.new(math.huge, math.huge))
 
-        local label = library:Create("TextLabel", {
+        local button = library:Create("TextLabel", {
             Text =  text,
             Size = UDim2.new(1, -10, 0, tSize.Y + 5);
             TextScaled = false;
@@ -331,13 +318,8 @@ function library:CreateWindow(options)
             Parent = self.container;
         })
 
-        -- Adding UICorner to label
-        local labelCorner = Instance.new("UICorner")
-        labelCorner.CornerRadius = UDim.new(0, 8)
-        labelCorner.Parent = label
-
         self:Resize()
-        return label
+        return button
     end
 
     function window:AddDropdown(options, callback)
@@ -359,7 +341,7 @@ function library:CreateWindow(options)
             Parent = self.container;
         })
 
-        -- Adding UICorner to dropdown
+        -- Adding UICorner to dropdown for rounded corners
         local dropdownCorner = Instance.new("UICorner")
         dropdownCorner.CornerRadius = UDim.new(0, 8)
         dropdownCorner.Parent = dropdown
@@ -413,11 +395,6 @@ function library:CreateWindow(options)
                 ClipsDescendants = true;
                 ZIndex = 2;
             })
-
-            -- Adding UICorner to dropdown frame
-            local frameCorner = Instance.new("UICorner")
-            frameCorner.CornerRadius = UDim.new(0, 8)
-            frameCorner.Parent = frame
            
             library:Create('UIListLayout', {
                 Name = 'Layout';
@@ -436,11 +413,6 @@ function library:CreateWindow(options)
                     Parent = frame;
                     ZIndex = 2;
                 })
-
-                -- Adding UICorner to each dropdown selection
-                local selectionCorner = Instance.new("UICorner")
-                selectionCorner.CornerRadius = UDim.new(0, 8)
-                selectionCorner.Parent = selection
                
                 selection.MouseButton1Click:connect(function()
                     dropdown.Text = option;
