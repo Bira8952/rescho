@@ -1,4 +1,4 @@
--- Start des verbesserten Skripts
+-- Beginn des korrigierten Skripts
 local library = {
     windowcount = 0;
 }
@@ -10,6 +10,7 @@ do
     local mouse = game:GetService("Players").LocalPlayer:GetMouse();
     local inputService = game:GetService('UserInputService');
     local heartbeat = game:GetService("RunService").Heartbeat;
+
     function dragger.new(frame)
         local s, event = pcall(function()
             return frame.MouseEnter
@@ -46,14 +47,14 @@ end
 
 local defaults = {
     txtcolor = Color3.fromRGB(255, 255, 255),
-    underline = Color3.fromRGB(0, 122, 204), -- Angenehmes Blau
-    barcolor = Color3.fromRGB(30, 30, 30),   -- Dunkler für die Titelleiste
-    bgcolor = Color3.fromRGB(40, 40, 40),    -- Dunkles Hintergrundgrau
-    boxcolor = Color3.fromRGB(50, 50, 50),   -- Grau für Eingabefelder
-    bartextcolor = Color3.fromRGB(255, 255, 255), -- Weißer Text in der Titelleiste
+    underline = Color3.fromRGB(0, 122, 204),
+    barcolor = Color3.fromRGB(35, 35, 35),
+    bgcolor = Color3.fromRGB(45, 45, 45),
+    boxcolor = Color3.fromRGB(55, 55, 55),
+    bartextcolor = Color3.fromRGB(255, 255, 255),
 }
 
-function library:Create(class, props)
+function library.Create(class, props)
     local object = Instance.new(class);
 
     for i, prop in next, props do
@@ -79,10 +80,10 @@ function library:CreateWindow(options)
 
     self.windowcount = self.windowcount + 1;
 
-    library.gui = library.gui or self:Create("ScreenGui", {Name = "UILibrary", Parent = game:GetService("CoreGui")})
-    window.frame = self:Create("Frame", {
+    library.gui = library.gui or library.Create("ScreenGui", {Name = "UILibrary", Parent = game:GetService("CoreGui")})
+    window.frame = library.Create("Frame", {
         Name = options.text;
-        Parent = self.gui,
+        Parent = library.gui,
         Active = true,
         BackgroundTransparency = 0,
         Size = UDim2.new(0, 220, 0, 30),
@@ -91,12 +92,12 @@ function library:CreateWindow(options)
         BorderSizePixel = 0;
     })
 
-    self:Create('UICorner', {
+    library.Create('UICorner', {
         CornerRadius = UDim.new(0, 6),
         Parent = window.frame,
     })
 
-    window.background = self:Create('Frame', {
+    window.background = library.Create('Frame', {
         Name = 'Background';
         Parent = window.frame,
         BorderSizePixel = 0;
@@ -106,36 +107,35 @@ function library:CreateWindow(options)
         ClipsDescendants = true;
     })
 
-    self:Create('UICorner', {
+    library.Create('UICorner', {
         CornerRadius = UDim.new(0, 6),
         Parent = window.background,
     })
 
-    window.container = self:Create('Frame', {
+    window.container = library.Create('Frame', {
         Name = 'Container';
         Parent = window.background,
         BorderSizePixel = 0;
         BackgroundTransparency = 1;
-        BackgroundColor3 = options.bgcolor,
         Size = UDim2.new(1, 0, 1, 0),
         ClipsDescendants = true;
     })
 
-    window.organizer = self:Create('UIListLayout', {
+    window.organizer = library.Create('UIListLayout', {
         Name = 'Sorter';
         SortOrder = Enum.SortOrder.LayoutOrder;
         Padding = UDim.new(0, 5);
         Parent = window.container;
     })
 
-    window.padder = self:Create('UIPadding', {
+    window.padder = library.Create('UIPadding', {
         Name = 'Padding';
         PaddingLeft = UDim.new(0, 10);
         PaddingTop = UDim.new(0, 10);
         Parent = window.container;
     })
 
-    self:Create("Frame", {
+    library.Create("Frame", {
         Name = 'Underline';
         Size = UDim2.new(1, 0, 0, 2),
         Position = UDim2.new(0, 0, 1, -2),
@@ -144,7 +144,7 @@ function library:CreateWindow(options)
         Parent = window.frame
     })
 
-    local togglebutton = self:Create("TextButton", {
+    local togglebutton = library.Create("TextButton", {
         Name = 'Toggle';
         ZIndex = 2,
         BackgroundTransparency = 1;
@@ -167,7 +167,7 @@ function library:CreateWindow(options)
         end
     end)
 
-    self:Create("TextLabel", {
+    library.Create("TextLabel", {
         Size = UDim2.new(1, -35, 1, 0),
         BackgroundTransparency = 1;
         BorderSizePixel = 0;
@@ -210,7 +210,7 @@ function library:CreateWindow(options)
         self.count = self.count + 1
 
         callback = callback or function() end
-        local label = library:Create("TextLabel", {
+        local label = library.Create("TextLabel", {
             Text = text,
             Size = UDim2.new(1, -10, 0, 25);
             BackgroundTransparency = 1;
@@ -222,7 +222,7 @@ function library:CreateWindow(options)
             Parent = self.container;
         })
 
-        local button = library:Create("TextButton", {
+        local button = library.Create("TextButton", {
             Text = "AUS",
             TextColor3 = Color3.fromRGB(255, 85, 85),
             BackgroundTransparency = 0;
@@ -234,7 +234,7 @@ function library:CreateWindow(options)
             Parent = label;
         })
 
-        self:Create('UICorner', {
+        library.Create('UICorner', {
             CornerRadius = UDim.new(0, 5),
             Parent = button,
         })
@@ -255,7 +255,7 @@ function library:CreateWindow(options)
         self.count = self.count + 1
         callback = callback or function() end
 
-        local box = library:Create("TextBox", {
+        local box = library.Create("TextBox", {
             PlaceholderText = text,
             Size = UDim2.new(1, -10, 0, 25);
             BackgroundTransparency = 0;
@@ -270,7 +270,7 @@ function library:CreateWindow(options)
             Parent = self.container;
         })
 
-        self:Create('UICorner', {
+        library.Create('UICorner', {
             CornerRadius = UDim.new(0, 5),
             Parent = box,
         })
@@ -287,7 +287,7 @@ function library:CreateWindow(options)
         self.count = self.count + 1
 
         callback = callback or function() end
-        local button = library:Create("TextButton", {
+        local button = library.Create("TextButton", {
             Text = text,
             Size = UDim2.new(1, -10, 0, 25);
             BackgroundTransparency = 0;
@@ -301,7 +301,7 @@ function library:CreateWindow(options)
             Parent = self.container;
         })
 
-        self:Create('UICorner', {
+        library.Create('UICorner', {
             CornerRadius = UDim.new(0, 5),
             Parent = button,
         })
@@ -316,7 +316,7 @@ function library:CreateWindow(options)
 
         local tSize = game:GetService('TextService'):GetTextSize(text, 16, Enum.Font.Gotham, Vector2.new(window.container.AbsoluteSize.X - 20, math.huge))
 
-        local label = library:Create("TextLabel", {
+        local label = library.Create("TextLabel", {
             Text = text,
             Size = UDim2.new(1, -10, 0, tSize.Y + 5);
             BackgroundTransparency = 1;
@@ -332,13 +332,13 @@ function library:CreateWindow(options)
         return label
     end
 
-    function window:AddDropdown(optionsTable, callback)
+    function window:AddDropdown(optionsList, callback)
         self.count = self.count + 1
-        local options = optionsTable or {}
-        local default = options[1] or "";
+        optionsList = optionsList or {}
+        local default = optionsList[1] or "";
 
         callback = callback or function() end
-        local dropdown = library:Create("TextButton", {
+        local dropdown = library.Create("TextButton", {
             Size = UDim2.new(1, -10, 0, 25);
             BackgroundTransparency = 0;
             BackgroundColor3 = options.boxcolor,
@@ -352,12 +352,12 @@ function library:CreateWindow(options)
             Parent = self.container;
         })
 
-        self:Create('UICorner', {
+        library.Create('UICorner', {
             CornerRadius = UDim.new(0, 5),
             Parent = dropdown,
         })
 
-        local arrow = library:Create("ImageLabel", {
+        local arrow = library.Create("ImageLabel", {
             BackgroundTransparency = 1;
             Image = 'rbxassetid://7072718362';
             Size = UDim2.new(0, 16, 0, 16);
@@ -377,16 +377,8 @@ function library:CreateWindow(options)
             return (mouse.X >= x1 and mouse.X <= x2) and (mouse.Y >= y1 and mouse.Y <= y2)
         end
 
-        local function count(t)
-            local c = 0;
-            for i, v in next, t do
-                c = c + 1
-            end
-            return c;
-        end
-
         dropdown.MouseButton1Click:Connect(function()
-            if count(options) == 0 then
+            if #optionsList == 0 then
                 return
             end
 
@@ -398,28 +390,28 @@ function library:CreateWindow(options)
 
             self.container.ClipsDescendants = false;
 
-            frame = library:Create('Frame', {
+            frame = library.Create('Frame', {
                 Position = UDim2.new(0, 0, 1, 0);
                 BackgroundColor3 = options.boxcolor;
-                Size = UDim2.new(1, 0, 0, (count(options) * 25));
+                Size = UDim2.new(1, 0, 0, (#optionsList * 25));
                 BorderSizePixel = 0;
                 Parent = dropdown;
                 ClipsDescendants = true;
                 ZIndex = 2;
             })
 
-            self:Create('UICorner', {
+            library.Create('UICorner', {
                 CornerRadius = UDim.new(0, 5),
                 Parent = frame,
             })
 
-            library:Create('UIListLayout', {
+            library.Create('UIListLayout', {
                 Name = 'Layout';
                 Parent = frame;
             })
 
-            for i, option in next, options do
-                local selection = library:Create('TextButton', {
+            for i, option in ipairs(optionsList) do
+                local selection = library.Create('TextButton', {
                     Text = option;
                     BackgroundColor3 = options.boxcolor;
                     TextColor3 = options.txtcolor;
@@ -457,8 +449,8 @@ function library:CreateWindow(options)
                     frame:Destroy()
                     frame = nil
                 end
-                options = array
-                dropdown.Text = "  " .. options[1];
+                optionsList = array
+                dropdown.Text = "  " .. optionsList[1];
             end
         }
     end
@@ -467,4 +459,4 @@ function library:CreateWindow(options)
 end
 
 return library
--- Ende des verbesserten Skripts
+-- Ende des korrigierten Skripts
