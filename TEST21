@@ -1,4 +1,4 @@
--- Beginn des korrigierten Skripts
+-- Beginn des aktualisierten Skripts
 local library = {
     windowcount = 0;
 }
@@ -144,11 +144,12 @@ function library:CreateWindow(options)
         Parent = window.frame
     })
 
+    -- Position der Buttons angepasst, um Platz für den Schließen-Button zu schaffen
     local togglebutton = library.Create("TextButton", {
         Name = 'Toggle';
         ZIndex = 2,
         BackgroundTransparency = 1;
-        Position = UDim2.new(1, -30, 0, 0),
+        Position = UDim2.new(1, -60, 0, 0),
         Size = UDim2.new(0, 30, 1, 0),
         Text = "-",
         TextSize = 18,
@@ -167,8 +168,26 @@ function library:CreateWindow(options)
         end
     end)
 
+    -- Schließen-Button hinzufügen
+    local closebutton = library.Create("TextButton", {
+        Name = 'Close';
+        ZIndex = 2,
+        BackgroundTransparency = 1;
+        Position = UDim2.new(1, -30, 0, 0),
+        Size = UDim2.new(0, 30, 1, 0),
+        Text = "x",
+        TextSize = 18,
+        TextColor3 = options.txtcolor,
+        Font = Enum.Font.GothamBold;
+        Parent = window.frame,
+    });
+
+    closebutton.MouseButton1Click:Connect(function()
+        window.frame:Destroy()
+    end)
+
     library.Create("TextLabel", {
-        Size = UDim2.new(1, -35, 1, 0),
+        Size = UDim2.new(1, -65, 1, 0), -- Angepasst für die beiden Buttons
         BackgroundTransparency = 1;
         BorderSizePixel = 0;
         TextColor3 = options.bartextcolor,
@@ -390,10 +409,14 @@ function library:CreateWindow(options)
 
             self.container.ClipsDescendants = false;
 
-            frame = library.Create('Frame', {
+            -- Hier erstellen wir ein ScrollingFrame für die Dropdown-Optionen
+            local maxDropdownHeight = 100 -- Maximale Höhe des Dropdowns
+            frame = library.Create('ScrollingFrame', {
                 Position = UDim2.new(0, 0, 1, 0);
                 BackgroundColor3 = options.boxcolor;
-                Size = UDim2.new(1, 0, 0, (#optionsList * 25));
+                Size = UDim2.new(1, 0, 0, math.min(#optionsList * 25, maxDropdownHeight));
+                CanvasSize = UDim2.new(0, 0, 0, #optionsList * 25);
+                ScrollBarThickness = 6;
                 BorderSizePixel = 0;
                 Parent = dropdown;
                 ClipsDescendants = true;
@@ -459,4 +482,4 @@ function library:CreateWindow(options)
 end
 
 return library
--- Ende des korrigierten Skripts
+-- Ende des aktualisierten Skripts
