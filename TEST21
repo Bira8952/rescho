@@ -1,4 +1,4 @@
--- Beginn des korrigierten Skripts
+-- Beginn des aktualisierten Skripts
 local library = {
     windowcount = 0;
 }
@@ -429,7 +429,7 @@ function library:CreateWindow(options)
                 Position = UDim2.new(0, dropdown.AbsolutePosition.X, 0, dropdown.AbsolutePosition.Y + dropdown.AbsoluteSize.Y),
                 BackgroundColor3 = options.boxcolor,
                 Size = UDim2.new(0, dropdown.AbsoluteSize.X, 0, math.min(#optionsList * 25, 150)), -- Maximale Höhe 150
-                CanvasSize = UDim2.new(0, 0, 0, #optionsList * 25),
+                AutomaticCanvasSize = Enum.AutomaticSize.Y, -- Automatische Anpassung der CanvasSize
                 ScrollBarThickness = 6,
                 BorderSizePixel = 0,
                 Parent = library.gui, -- Direkt unter der ScreenGui geparented
@@ -442,7 +442,7 @@ function library:CreateWindow(options)
                 Parent = frame,
             })
 
-            library.Create('UIListLayout', {
+            local listLayout = library.Create('UIListLayout', {
                 Name = 'Layout',
                 Parent = frame,
             })
@@ -508,4 +508,4 @@ function library:CreateWindow(options)
 end
 
 return library
--- Ende des korrigierten Skripts
+-- Ende des aktualisierten Skripts
