@@ -233,138 +233,6 @@ function library:CreateWindow(options)
         end
     end
 
-    function window:AddToggle(text, callback)
-        self.count = self.count + 1
-
-        callback = callback or function() end
-        local label = library.Create("TextLabel", {
-            Text = text,
-            Size = UDim2.new(1, -10, 0, 25);
-            BackgroundTransparency = 1;
-            TextColor3 = options.txtcolor;
-            TextXAlignment = Enum.TextXAlignment.Left;
-            LayoutOrder = self.count;
-            TextSize = 16,
-            Font = Enum.Font.Gotham;
-            Parent = self.container;
-            ZIndex = 1;
-        })
-
-        local button = library.Create("TextButton", {
-            Text = "AUS",
-            TextColor3 = Color3.fromRGB(255, 85, 85),
-            BackgroundTransparency = 0;
-            BackgroundColor3 = Color3.fromRGB(60, 60, 60),
-            Position = UDim2.new(1, -60, 0.5, -10),
-            Size = UDim2.new(0, 50, 0, 20),
-            TextSize = 14,
-            Font = Enum.Font.GothamBold,
-            Parent = label;
-            ZIndex = 1;
-        })
-
-        library.Create('UICorner', {
-            CornerRadius = UDim.new(0, 5),
-            Parent = button,
-        })
-
-        button.MouseButton1Click:Connect(function()
-            self.toggles[text] = (not self.toggles[text])
-            button.TextColor3 = (self.toggles[text] and Color3.fromRGB(85, 255, 127) or Color3.fromRGB(255, 85, 85))
-            button.Text = (self.toggles[text] and "AN" or "AUS")
-
-            callback(self.toggles[text])
-        end)
-
-        self:Resize()
-        return button
-    end
-
-    function window:AddBox(text, callback)
-        self.count = self.count + 1
-        callback = callback or function() end
-
-        local box = library.Create("TextBox", {
-            PlaceholderText = text,
-            Size = UDim2.new(1, -10, 0, 25);
-            BackgroundTransparency = 0;
-            BackgroundColor3 = options.boxcolor,
-            TextColor3 = options.txtcolor;
-            TextXAlignment = Enum.TextXAlignment.Left;
-            TextSize = 16,
-            Text = "",
-            Font = Enum.Font.Gotham,
-            LayoutOrder = self.count;
-            BorderSizePixel = 0;
-            Parent = self.container;
-            ZIndex = 1;
-        })
-
-        library.Create('UICorner', {
-            CornerRadius = UDim.new(0, 5),
-            Parent = box,
-        })
-
-        box.FocusLost:Connect(function(...)
-            callback(box, ...)
-        end)
-
-        self:Resize()
-        return box
-    end
-
-    function window:AddButton(text, callback)
-        self.count = self.count + 1
-
-        callback = callback or function() end
-        local button = library.Create("TextButton", {
-            Text = text,
-            Size = UDim2.new(1, -10, 0, 25);
-            BackgroundTransparency = 0;
-            BackgroundColor3 = options.boxcolor,
-            TextColor3 = options.txtcolor;
-            TextXAlignment = Enum.TextXAlignment.Center;
-            TextSize = 16,
-            Font = Enum.Font.GothamBold,
-            LayoutOrder = self.count;
-            BorderSizePixel = 0;
-            Parent = self.container;
-            ZIndex = 1;
-        })
-
-        library.Create('UICorner', {
-            CornerRadius = UDim.new(0, 5),
-            Parent = button,
-        })
-
-        button.MouseButton1Click:Connect(callback)
-        self:Resize()
-        return button
-    end
-
-    function window:AddLabel(text)
-        self.count = self.count + 1;
-
-        local tSize = game:GetService('TextService'):GetTextSize(text, 16, Enum.Font.Gotham, Vector2.new(window.container.AbsoluteSize.X - 20, math.huge))
-
-        local label = library.Create("TextLabel", {
-            Text = text,
-            Size = UDim2.new(1, -10, 0, tSize.Y + 5);
-            BackgroundTransparency = 1;
-            TextColor3 = options.txtcolor;
-            TextXAlignment = Enum.TextXAlignment.Left;
-            TextSize = 16,
-            Font = Enum.Font.Gotham,
-            LayoutOrder = self.count;
-            Parent = self.container;
-            ZIndex = 1;
-        })
-
-        self:Resize()
-        return label
-    end
-
-    -- Korrigierte AddDropdown-Funktion
     function window:AddDropdown(optionsList, callback)
         self.count = self.count + 1
         optionsList = optionsList or {}
@@ -412,9 +280,9 @@ function library:CreateWindow(options)
             BackgroundTransparency = 0,
             BackgroundColor3 = options.boxcolor,
             BorderSizePixel = 0,
-            Parent = nil, -- Wir setzen den Parent beim Öffnen des Dropdowns
+            Parent = nil,
             ClipsDescendants = false,
-            ZIndex = 100, -- Höherer ZIndex, damit es über anderen UI-Elementen liegt
+            ZIndex = 100,
             Active = true,
         })
 
@@ -463,12 +331,11 @@ function library:CreateWindow(options)
             table.insert(optionButtons, optionButton)
         end
 
-        optionsFrame.Visible = false -- Anfangs ausblenden
+        optionsFrame.Visible = false
 
         dropdown.MouseButton1Click:Connect(function()
             dropdownOpen = not dropdownOpen
             if dropdownOpen then
-                -- Modales Overlay erstellen
                 modalOverlay = library.Create('Frame', {
                     Size = UDim2.new(1, 0, 1, 0),
                     Position = UDim2.new(0, 0, 0, 0),
@@ -480,7 +347,6 @@ function library:CreateWindow(options)
                     Active = true,
                 })
 
-                -- Optionen-Frame unter dem Modal-Overlay parenten
                 optionsFrame.Parent = modalOverlay
                 optionsFrame.ZIndex = 100
                 for _, child in ipairs(optionsFrame:GetChildren()) do
@@ -491,7 +357,6 @@ function library:CreateWindow(options)
                 optionsFrame.Size = UDim2.new(0, dropdown.AbsoluteSize.X, 0, listLayout.AbsoluteContentSize.Y)
                 optionsFrame.Position = UDim2.new(0, dropdown.AbsolutePosition.X, 0, dropdown.AbsolutePosition.Y + dropdown.AbsoluteSize.Y)
 
-                -- Schließen des Dropdowns beim Klicken außerhalb
                 modalOverlay.InputBegan:Connect(function(input)
                     if input.UserInputType == Enum.UserInputType.MouseButton1 then
                         local mousePos = game:GetService('UserInputService'):GetMouseLocation()
@@ -514,7 +379,6 @@ function library:CreateWindow(options)
             end
         end)
 
-        -- Aktualisiert die Position des Optionsrahmens, falls das Fenster bewegt wird
         game:GetService("RunService").RenderStepped:Connect(function()
             if dropdownOpen and optionsFrame.Visible and dropdown.AbsolutePosition then
                 optionsFrame.Position = UDim2.new(0, dropdown.AbsolutePosition.X, 0, dropdown.AbsolutePosition.Y + dropdown.AbsoluteSize.Y)
