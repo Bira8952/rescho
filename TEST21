@@ -1,4 +1,4 @@
--- Beginn des aktualisierten Skripts
+-- Beginn des verbesserten Skripts
 local library = {
     windowcount = 0;
 }
@@ -108,7 +108,7 @@ function library:CreateWindow(options)
         BackgroundColor3 = options.bgcolor,
         Position = UDim2.new(0, 0, 1, 0),
         Size = UDim2.new(1, 0, 0, 25),
-        ClipsDescendants = true;
+        ClipsDescendants = false;
         ZIndex = 1;
     })
 
@@ -117,12 +117,16 @@ function library:CreateWindow(options)
         Parent = window.background,
     })
 
-    window.container = library.Create('Frame', {
+    window.container = library.Create('ScrollingFrame', {
         Name = 'Container';
         Parent = window.background,
         BorderSizePixel = 0;
         BackgroundTransparency = 1;
         Size = UDim2.new(1, 0, 1, 0),
+        CanvasSize = UDim2.new(0, 0, 0, 0),
+        ScrollBarThickness = 0,
+        VerticalScrollBarInset = Enum.ScrollBarInset.None,
+        ScrollingEnabled = false,
         ClipsDescendants = false;
         ZIndex = 1;
     })
@@ -231,6 +235,9 @@ function library:CreateWindow(options)
         else
             self.background.Size = size
         end
+
+        -- Aktualisiere die CanvasSize des Containers
+        self.container.CanvasSize = UDim2.new(0, 0, 0, self.organizer.AbsoluteContentSize.Y + 10)
     end
 
     function window:AddToggle(text, callback)
@@ -364,7 +371,7 @@ function library:CreateWindow(options)
         return label
     end
 
-    -- Korrigierte AddDropdown-Funktion
+    -- Verbesserte AddDropdown-Funktion
     function window:AddDropdown(optionsList, callback)
         self.count = self.count + 1
         optionsList = optionsList or {}
@@ -425,12 +432,10 @@ function library:CreateWindow(options)
             end
 
             -- Das Dropdown-Menü wird direkt unter der GUI geparented, um Clipping zu vermeiden
-            frame = library.Create('ScrollingFrame', {
+            frame = library.Create('Frame', {
                 Position = UDim2.new(0, dropdown.AbsolutePosition.X, 0, dropdown.AbsolutePosition.Y + dropdown.AbsoluteSize.Y),
                 BackgroundColor3 = options.boxcolor,
-                Size = UDim2.new(0, dropdown.AbsoluteSize.X, 0, math.min(#optionsList * 25, 150)), -- Maximale Höhe 150
-                AutomaticCanvasSize = Enum.AutomaticSize.Y, -- Automatische Anpassung der CanvasSize
-                ScrollBarThickness = 6,
+                Size = UDim2.new(0, dropdown.AbsoluteSize.X, 0, 0),
                 BorderSizePixel = 0,
                 Parent = library.gui, -- Direkt unter der ScreenGui geparented
                 ClipsDescendants = true,
@@ -467,6 +472,9 @@ function library:CreateWindow(options)
                     frame = nil
                 end)
             end
+
+            -- Größe des Frames anpassen
+            frame.Size = UDim2.new(0, dropdown.AbsoluteSize.X, 0, listLayout.AbsoluteContentSize.Y)
 
             -- Aktualisiert die Position des Dropdowns, wenn das Fenster bewegt wird
             local connection
@@ -508,4 +516,4 @@ function library:CreateWindow(options)
 end
 
 return library
--- Ende des aktualisierten Skripts
+-- Ende des verbesserten Skripts
