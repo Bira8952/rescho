@@ -403,16 +403,17 @@ function library:CreateWindow(options)
             ZIndex = 1,
         })
 
-        -- Optionen Frame direkt unter dem Dropdown geparented
+        -- Optionen Frame direkt unter library.gui geparented
         local optionsFrame = library.Create('Frame', {
-            Size = UDim2.new(1, 0, 0, 0),
-            Position = UDim2.new(0, 0, 1, 0),
+            Size = UDim2.new(0, dropdown.AbsoluteSize.X, 0, 0),
+            Position = UDim2.new(0, dropdown.AbsolutePosition.X, 0, dropdown.AbsolutePosition.Y + dropdown.AbsoluteSize.Y),
             BackgroundTransparency = 0,
             BackgroundColor3 = options.boxcolor,
             BorderSizePixel = 0,
-            Parent = dropdown, -- Unter dem Dropdown geparented
+            Parent = library.gui, -- Unter library.gui geparented
             ClipsDescendants = true,
-            ZIndex = 2, -- Höherer ZIndex
+            ZIndex = 10, -- Höherer ZIndex
+            Active = true, -- Aktivieren, um Eingaben zu empfangen
         })
 
         library.Create('UICorner', {
@@ -441,29 +442,38 @@ function library:CreateWindow(options)
                 Font = Enum.Font.Gotham,
                 BorderSizePixel = 0,
                 Parent = optionsFrame,
-                ZIndex = 2,
+                ZIndex = 10,
+                Active = true, -- Aktivieren, um Eingaben zu empfangen
             })
 
             optionButton.MouseButton1Click:Connect(function()
                 dropdown.Text = "  " .. option
                 callback(option)
                 dropdownOpen = false
-                optionsFrame.Size = UDim2.new(1, 0, 0, 0)
+                optionsFrame.Visible = false
             end)
 
             table.insert(optionButtons, optionButton)
         end
 
-        optionsFrame.Size = UDim2.new(1, 0, 0, 0) -- Anfangs ausgeblendet
+        optionsFrame.Visible = false -- Anfangs ausblenden
 
         dropdown.MouseButton1Click:Connect(function()
             dropdownOpen = not dropdownOpen
             if dropdownOpen then
-                optionsFrame.Size = UDim2.new(1, 0, 0, listLayout.AbsoluteContentSize.Y)
+                optionsFrame.Visible = true
+                optionsFrame.Size = UDim2.new(0, dropdown.AbsoluteSize.X, 0, listLayout.AbsoluteContentSize.Y)
+                optionsFrame.Position = UDim2.new(0, dropdown.AbsolutePosition.X, 0, dropdown.AbsolutePosition.Y + dropdown.AbsoluteSize.Y)
             else
-                optionsFrame.Size = UDim2.new(1, 0, 0, 0)
+                optionsFrame.Visible = false
             end
-            self:Resize()
+        end)
+
+        -- Aktualisiert die Position des Optionsrahmens, falls das Fenster bewegt wird
+        game:GetService("RunService").RenderStepped:Connect(function()
+            if dropdownOpen and dropdown.AbsolutePosition then
+                optionsFrame.Position = UDim2.new(0, dropdown.AbsolutePosition.X, 0, dropdown.AbsolutePosition.Y + dropdown.AbsoluteSize.Y)
+            end
         end)
 
         -- Klick außerhalb des Dropdowns schließt es
@@ -477,8 +487,7 @@ function library:CreateWindow(options)
 
                 if not withinDropdown and not withinButton then
                     dropdownOpen = false
-                    optionsFrame.Size = UDim2.new(1, 0, 0, 0)
-                    self:Resize()
+                    optionsFrame.Visible = false
                 end
             end
         end)
