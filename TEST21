@@ -1,4 +1,4 @@
--- Beginn des verbesserten Skripts
+-- Beginn des Skripts
 local library = {
     windowcount = 0;
 }
@@ -82,6 +82,7 @@ function library:CreateWindow(options)
 
     library.gui = library.gui or library.Create("ScreenGui", {Name = "UILibrary", Parent = game:GetService("CoreGui")})
     library.gui.ResetOnSpawn = false
+    library.gui.ZIndexBehavior = Enum.ZIndexBehavior.Global -- ZIndexBehavior setzen
 
     window.frame = library.Create("Frame", {
         Name = options.text;
@@ -371,7 +372,7 @@ function library:CreateWindow(options)
         return label
     end
 
-    -- Verbesserte AddDropdown-Funktion
+    -- Korrigierte AddDropdown-Funktion
     function window:AddDropdown(optionsList, callback)
         self.count = self.count + 1
         optionsList = optionsList or {}
@@ -392,6 +393,7 @@ function library:CreateWindow(options)
             Parent = self.container,
             ZIndex = 1,
             ClipsDescendants = false,
+            Active = true,
         })
 
         library.Create('UICorner', {
@@ -410,16 +412,6 @@ function library:CreateWindow(options)
 
         local frame
 
-        local function isInGui(frame)
-            local mloc = game:GetService('UserInputService'):GetMouseLocation()
-            local mouse = Vector2.new(mloc.X, mloc.Y - 36)
-
-            local x1, x2 = frame.AbsolutePosition.X, frame.AbsolutePosition.X + frame.AbsoluteSize.X
-            local y1, y2 = frame.AbsolutePosition.Y, frame.AbsolutePosition.Y + frame.AbsoluteSize.Y
-
-            return (mouse.X >= x1 and mouse.X <= x2) and (mouse.Y >= y1 and mouse.Y <= y2)
-        end
-
         dropdown.MouseButton1Click:Connect(function()
             if #optionsList == 0 then
                 return
@@ -431,15 +423,15 @@ function library:CreateWindow(options)
                 return
             end
 
-            -- Das Dropdown-Menü wird direkt unter der GUI geparented, um Clipping zu vermeiden
             frame = library.Create('Frame', {
-                Position = UDim2.new(0, dropdown.AbsolutePosition.X, 0, dropdown.AbsolutePosition.Y + dropdown.AbsoluteSize.Y),
+                Position = UDim2.new(0, 0, 1, 0),
                 BackgroundColor3 = options.boxcolor,
-                Size = UDim2.new(0, dropdown.AbsoluteSize.X, 0, 0),
+                Size = UDim2.new(1, 0, 0, 0),
                 BorderSizePixel = 0,
-                Parent = library.gui, -- Direkt unter der ScreenGui geparented
-                ClipsDescendants = true,
-                ZIndex = 5, -- Höherer ZIndex, damit es über anderen Elementen angezeigt wird
+                Parent = dropdown,
+                ClipsDescendants = false,
+                ZIndex = 1000,
+                Active = true,
             })
 
             library.Create('UICorner', {
@@ -462,7 +454,8 @@ function library:CreateWindow(options)
                     Font = Enum.Font.Gotham,
                     Size = UDim2.new(1, 0, 0, 25),
                     Parent = frame,
-                    ZIndex = 5,
+                    ZIndex = 1000,
+                    Active = true,
                 })
 
                 selection.MouseButton1Click:Connect(function()
@@ -474,28 +467,12 @@ function library:CreateWindow(options)
             end
 
             -- Größe des Frames anpassen
-            frame.Size = UDim2.new(0, dropdown.AbsoluteSize.X, 0, listLayout.AbsoluteContentSize.Y)
+            frame.Size = UDim2.new(1, 0, 0, listLayout.AbsoluteContentSize.Y)
 
-            -- Aktualisiert die Position des Dropdowns, wenn das Fenster bewegt wird
-            local connection
-            connection = game:GetService("RunService").RenderStepped:Connect(function()
-                if frame and dropdown.Parent then
-                    frame.Position = UDim2.new(0, dropdown.AbsolutePosition.X, 0, dropdown.AbsolutePosition.Y + dropdown.AbsoluteSize.Y)
-                else
-                    if connection then
-                        connection:Disconnect()
-                    end
-                end
+            -- Aktualisiere die Größe, wenn sich der Inhalt ändert
+            listLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                frame.Size = UDim2.new(1, 0, 0, listLayout.AbsoluteContentSize.Y)
             end)
-        end)
-
-        game:GetService('UserInputService').InputBegan:Connect(function(m)
-            if m.UserInputType == Enum.UserInputType.MouseButton1 then
-                if frame and (not isInGui(frame)) then
-                    frame:Destroy()
-                    frame = nil
-                end
-            end
         end)
 
         callback(default)
@@ -516,4 +493,4 @@ function library:CreateWindow(options)
 end
 
 return library
--- Ende des verbesserten Skripts
+-- Ende des Skripts
