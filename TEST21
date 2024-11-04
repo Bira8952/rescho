@@ -387,6 +387,8 @@ function library:CreateWindow(options)
             Parent = self.container,
             ZIndex = 1,
             ClipsDescendants = false,
+            AutoButtonColor = false,
+            Active = true,
         })
 
         library.Create('UICorner', {
@@ -407,12 +409,12 @@ function library:CreateWindow(options)
         local optionsFrame = library.Create('Frame', {
             Size = UDim2.new(0, dropdown.AbsoluteSize.X, 0, 0),
             Position = UDim2.new(0, dropdown.AbsolutePosition.X, 0, dropdown.AbsolutePosition.Y + dropdown.AbsoluteSize.Y),
-            BackgroundTransparency = 0,
+            BackgroundTransparency = 0, -- Opaque to receive input
             BackgroundColor3 = options.boxcolor,
             BorderSizePixel = 0,
             Parent = library.gui, -- Unter library.gui geparented
-            ClipsDescendants = true,
-            ZIndex = 10, -- Höherer ZIndex
+            ClipsDescendants = false,
+            ZIndex = 100, -- Höherer ZIndex
             Active = true, -- Aktivieren, um Eingaben zu empfangen
         })
 
@@ -442,7 +444,8 @@ function library:CreateWindow(options)
                 Font = Enum.Font.Gotham,
                 BorderSizePixel = 0,
                 Parent = optionsFrame,
-                ZIndex = 10,
+                ZIndex = 100,
+                AutoButtonColor = false,
                 Active = true, -- Aktivieren, um Eingaben zu empfangen
             })
 
