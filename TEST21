@@ -1,4 +1,4 @@
--- Beginn des vollständigen und korrigierten Skripts
+-- Beginn des verbesserten Skripts
 local library = {
     windowcount = 0;
 }
@@ -117,12 +117,16 @@ function library:CreateWindow(options)
         Parent = window.background,
     })
 
-    window.container = library.Create('Frame', {
+    window.container = library.Create('ScrollingFrame', {
         Name = 'Container';
         Parent = window.background,
         BorderSizePixel = 0;
         BackgroundTransparency = 1;
         Size = UDim2.new(1, 0, 1, 0),
+        CanvasSize = UDim2.new(0, 0, 0, 0),
+        ScrollBarThickness = 0,
+        VerticalScrollBarInset = Enum.ScrollBarInset.None,
+        ScrollingEnabled = false,
         ClipsDescendants = false;
         ZIndex = 1;
     })
@@ -224,24 +228,156 @@ function library:CreateWindow(options)
 
     function window:Resize(tween, change)
         local size = change or getSize()
-        self.container.ClipsDescendants = false;
+        self.container.ClipsDescendants = true;
 
         if tween then
             self.background:TweenSize(size, "Out", "Sine", 0.5, true)
         else
             self.background.Size = size
         end
+
+        -- Aktualisiere die CanvasSize des Containers
+        self.container.CanvasSize = UDim2.new(0, 0, 0, self.organizer.AbsoluteContentSize.Y + 10)
     end
 
+    function window:AddToggle(text, callback)
+        self.count = self.count + 1
+
+        callback = callback or function() end
+        local label = library.Create("TextLabel", {
+            Text = text,
+            Size = UDim2.new(1, -10, 0, 25);
+            BackgroundTransparency = 1;
+            TextColor3 = options.txtcolor;
+            TextXAlignment = Enum.TextXAlignment.Left;
+            LayoutOrder = self.count;
+            TextSize = 16,
+            Font = Enum.Font.Gotham;
+            Parent = self.container;
+            ZIndex = 1;
+        })
+
+        local button = library.Create("TextButton", {
+            Text = "AUS",
+            TextColor3 = Color3.fromRGB(255, 85, 85),
+            BackgroundTransparency = 0;
+            BackgroundColor3 = Color3.fromRGB(60, 60, 60),
+            Position = UDim2.new(1, -60, 0.5, -10),
+            Size = UDim2.new(0, 50, 0, 20),
+            TextSize = 14,
+            Font = Enum.Font.GothamBold,
+            Parent = label;
+            ZIndex = 1;
+        })
+
+        library.Create('UICorner', {
+            CornerRadius = UDim.new(0, 5),
+            Parent = button,
+        })
+
+        button.MouseButton1Click:Connect(function()
+            self.toggles[text] = (not self.toggles[text])
+            button.TextColor3 = (self.toggles[text] and Color3.fromRGB(85, 255, 127) or Color3.fromRGB(255, 85, 85))
+            button.Text = (self.toggles[text] and "AN" or "AUS")
+
+            callback(self.toggles[text])
+        end)
+
+        self:Resize()
+        return button
+    end
+
+    function window:AddBox(text, callback)
+        self.count = self.count + 1
+        callback = callback or function() end
+
+        local box = library.Create("TextBox", {
+            PlaceholderText = text,
+            Size = UDim2.new(1, -10, 0, 25);
+            BackgroundTransparency = 0;
+            BackgroundColor3 = options.boxcolor,
+            TextColor3 = options.txtcolor;
+            TextXAlignment = Enum.TextXAlignment.Left;
+            TextSize = 16,
+            Text = "",
+            Font = Enum.Font.Gotham,
+            LayoutOrder = self.count;
+            BorderSizePixel = 0;
+            Parent = self.container;
+            ZIndex = 1;
+        })
+
+        library.Create('UICorner', {
+            CornerRadius = UDim.new(0, 5),
+            Parent = box,
+        })
+
+        box.FocusLost:Connect(function(...)
+            callback(box, ...)
+        end)
+
+        self:Resize()
+        return box
+    end
+
+    function window:AddButton(text, callback)
+        self.count = self.count + 1
+
+        callback = callback or function() end
+        local button = library.Create("TextButton", {
+            Text = text,
+            Size = UDim2.new(1, -10, 0, 25);
+            BackgroundTransparency = 0;
+            BackgroundColor3 = options.boxcolor,
+            TextColor3 = options.txtcolor;
+            TextXAlignment = Enum.TextXAlignment.Center;
+            TextSize = 16,
+            Font = Enum.Font.GothamBold,
+            LayoutOrder = self.count;
+            BorderSizePixel = 0;
+            Parent = self.container;
+            ZIndex = 1;
+        })
+
+        library.Create('UICorner', {
+            CornerRadius = UDim.new(0, 5),
+            Parent = button,
+        })
+
+        button.MouseButton1Click:Connect(callback)
+        self:Resize()
+        return button
+    end
+
+    function window:AddLabel(text)
+        self.count = self.count + 1;
+
+        local tSize = game:GetService('TextService'):GetTextSize(text, 16, Enum.Font.Gotham, Vector2.new(window.container.AbsoluteSize.X - 20, math.huge))
+
+        local label = library.Create("TextLabel", {
+            Text = text,
+            Size = UDim2.new(1, -10, 0, tSize.Y + 5);
+            BackgroundTransparency = 1;
+            TextColor3 = options.txtcolor;
+            TextXAlignment = Enum.TextXAlignment.Left;
+            TextSize = 16,
+            Font = Enum.Font.Gotham,
+            LayoutOrder = self.count;
+            Parent = self.container;
+            ZIndex = 1;
+        })
+
+        self:Resize()
+        return label
+    end
+
+    -- Verbesserte AddDropdown-Funktion
     function window:AddDropdown(optionsList, callback)
         self.count = self.count + 1
         optionsList = optionsList or {}
         local default = optionsList[1] or ""
 
         callback = callback or function() end
-        local dropdownOpen = false
-        local modalOverlay
-
         local dropdown = library.Create("TextButton", {
             Size = UDim2.new(1, -10, 0, 25),
             BackgroundTransparency = 0,
@@ -256,8 +392,6 @@ function library:CreateWindow(options)
             Parent = self.container,
             ZIndex = 1,
             ClipsDescendants = false,
-            AutoButtonColor = false,
-            Active = true,
         })
 
         library.Create('UICorner', {
@@ -274,123 +408,112 @@ function library:CreateWindow(options)
             ZIndex = 1,
         })
 
-        local optionsFrame = library.Create('Frame', {
-            Size = UDim2.new(0, dropdown.AbsoluteSize.X, 0, 0),
-            Position = UDim2.new(0, dropdown.AbsolutePosition.X, 0, dropdown.AbsolutePosition.Y + dropdown.AbsoluteSize.Y),
-            BackgroundTransparency = 0,
-            BackgroundColor3 = options.boxcolor,
-            BorderSizePixel = 0,
-            Parent = nil,
-            ClipsDescendants = false,
-            ZIndex = 100,
-            Active = true,
-        })
+        local frame
 
-        library.Create('UICorner', {
-            CornerRadius = UDim.new(0, 5),
-            Parent = optionsFrame,
-        })
+        local function isInGui(frame)
+            local mloc = game:GetService('UserInputService'):GetMouseLocation()
+            local mouse = Vector2.new(mloc.X, mloc.Y - 36)
 
-        local listLayout = library.Create('UIListLayout', {
-            Parent = optionsFrame,
-            SortOrder = Enum.SortOrder.LayoutOrder,
-            Padding = UDim.new(0, 2),
-        })
+            local x1, x2 = frame.AbsolutePosition.X, frame.AbsolutePosition.X + frame.AbsoluteSize.X
+            local y1, y2 = frame.AbsolutePosition.Y, frame.AbsolutePosition.Y + frame.AbsoluteSize.Y
 
-        local optionButtons = {}
-
-        for i, option in ipairs(optionsList) do
-            local optionButton = library.Create('TextButton', {
-                Text = option,
-                Size = UDim2.new(1, -4, 0, 25),
-                Position = UDim2.new(0, 2, 0, 0),
-                BackgroundTransparency = 0,
-                BackgroundColor3 = options.boxcolor,
-                TextColor3 = options.txtcolor,
-                TextXAlignment = Enum.TextXAlignment.Left,
-                TextSize = 16,
-                Font = Enum.Font.Gotham,
-                BorderSizePixel = 0,
-                Parent = optionsFrame,
-                ZIndex = 101,
-                AutoButtonColor = false,
-                Active = true,
-            })
-
-            optionButton.MouseButton1Click:Connect(function()
-                dropdown.Text = "  " .. option
-                callback(option)
-                dropdownOpen = false
-                optionsFrame.Visible = false
-                optionsFrame.Parent = nil
-                if modalOverlay then
-                    modalOverlay:Destroy()
-                end
-            end)
-
-            table.insert(optionButtons, optionButton)
+            return (mouse.X >= x1 and mouse.X <= x2) and (mouse.Y >= y1 and mouse.Y <= y2)
         end
 
-        optionsFrame.Visible = false
-
         dropdown.MouseButton1Click:Connect(function()
-            dropdownOpen = not dropdownOpen
-            if dropdownOpen then
-                modalOverlay = library.Create('Frame', {
-                    Size = UDim2.new(1, 0, 1, 0),
-                    Position = UDim2.new(0, 0, 0, 0),
-                    BackgroundTransparency = 1,
-                    BackgroundColor3 = Color3.new(0, 0, 0),
+            if #optionsList == 0 then
+                return
+            end
+
+            if frame then
+                frame:Destroy()
+                frame = nil
+                return
+            end
+
+            -- Das Dropdown-Menü wird direkt unter der GUI geparented, um Clipping zu vermeiden
+            frame = library.Create('Frame', {
+                Position = UDim2.new(0, dropdown.AbsolutePosition.X, 0, dropdown.AbsolutePosition.Y + dropdown.AbsoluteSize.Y),
+                BackgroundColor3 = options.boxcolor,
+                Size = UDim2.new(0, dropdown.AbsoluteSize.X, 0, 0),
+                BorderSizePixel = 0,
+                Parent = library.gui, -- Direkt unter der ScreenGui geparented
+                ClipsDescendants = true,
+                ZIndex = 5, -- Höherer ZIndex, damit es über anderen Elementen angezeigt wird
+            })
+
+            library.Create('UICorner', {
+                CornerRadius = UDim.new(0, 5),
+                Parent = frame,
+            })
+
+            local listLayout = library.Create('UIListLayout', {
+                Name = 'Layout',
+                Parent = frame,
+            })
+
+            for i, option in ipairs(optionsList) do
+                local selection = library.Create('TextButton', {
+                    Text = option,
+                    BackgroundColor3 = options.boxcolor,
+                    TextColor3 = options.txtcolor,
                     BorderSizePixel = 0,
-                    Parent = library.gui,
-                    ZIndex = 99,
-                    Active = true,
+                    TextSize = 16,
+                    Font = Enum.Font.Gotham,
+                    Size = UDim2.new(1, 0, 0, 25),
+                    Parent = frame,
+                    ZIndex = 5,
                 })
 
-                optionsFrame.Parent = modalOverlay
-                optionsFrame.ZIndex = 100
-                for _, child in ipairs(optionsFrame:GetChildren()) do
-                    child.ZIndex = 101
-                end
-
-                optionsFrame.Visible = true
-                optionsFrame.Size = UDim2.new(0, dropdown.AbsoluteSize.X, 0, listLayout.AbsoluteContentSize.Y)
-                optionsFrame.Position = UDim2.new(0, dropdown.AbsolutePosition.X, 0, dropdown.AbsolutePosition.Y + dropdown.AbsoluteSize.Y)
-
-                modalOverlay.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                        local mousePos = game:GetService('UserInputService'):GetMouseLocation()
-                        local withinOptions = (mousePos.X > optionsFrame.AbsolutePosition.X and mousePos.X < optionsFrame.AbsolutePosition.X + optionsFrame.AbsoluteSize.X) and
-                            (mousePos.Y > optionsFrame.AbsolutePosition.Y and mousePos.Y < optionsFrame.AbsolutePosition.Y + optionsFrame.AbsoluteSize.Y)
-                        if not withinOptions then
-                            dropdownOpen = false
-                            optionsFrame.Visible = false
-                            optionsFrame.Parent = nil
-                            modalOverlay:Destroy()
-                        end
-                    end
+                selection.MouseButton1Click:Connect(function()
+                    dropdown.Text = "  " .. option
+                    callback(option)
+                    frame:Destroy()
+                    frame = nil
                 end)
-            else
-                if modalOverlay then
-                    optionsFrame.Visible = false
-                    optionsFrame.Parent = nil
-                    modalOverlay:Destroy()
+            end
+
+            -- Größe des Frames anpassen
+            frame.Size = UDim2.new(0, dropdown.AbsoluteSize.X, 0, listLayout.AbsoluteContentSize.Y)
+
+            -- Aktualisiert die Position des Dropdowns, wenn das Fenster bewegt wird
+            local connection
+            connection = game:GetService("RunService").RenderStepped:Connect(function()
+                if frame and dropdown.Parent then
+                    frame.Position = UDim2.new(0, dropdown.AbsolutePosition.X, 0, dropdown.AbsolutePosition.Y + dropdown.AbsoluteSize.Y)
+                else
+                    if connection then
+                        connection:Disconnect()
+                    end
+                end
+            end)
+        end)
+
+        game:GetService('UserInputService').InputBegan:Connect(function(m)
+            if m.UserInputType == Enum.UserInputType.MouseButton1 then
+                if frame and (not isInGui(frame)) then
+                    frame:Destroy()
+                    frame = nil
                 end
             end
         end)
 
-        game:GetService("RunService").RenderStepped:Connect(function()
-            if dropdownOpen and optionsFrame.Visible and dropdown.AbsolutePosition then
-                optionsFrame.Position = UDim2.new(0, dropdown.AbsolutePosition.X, 0, dropdown.AbsolutePosition.Y + dropdown.AbsoluteSize.Y)
-            end
-        end)
-
+        callback(default)
         self:Resize()
-        return dropdown
+        return {
+            Refresh = function(self, array)
+                if frame then
+                    frame:Destroy()
+                    frame = nil
+                end
+                optionsList = array
+                dropdown.Text = "  " .. optionsList[1]
+            end
+        }
     end
 
     return window
 end
 
 return library
--- Ende des vollständigen und korrigierten Skripts
+-- Ende des verbesserten Skripts
