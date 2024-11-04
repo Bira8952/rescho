@@ -117,16 +117,12 @@ function library:CreateWindow(options)
         Parent = window.background,
     })
 
-    window.container = library.Create('ScrollingFrame', {
+    window.container = library.Create('Frame', {
         Name = 'Container';
         Parent = window.background,
         BorderSizePixel = 0;
         BackgroundTransparency = 1;
         Size = UDim2.new(1, 0, 1, 0),
-        CanvasSize = UDim2.new(0, 0, 0, 0),
-        ScrollBarThickness = 0,
-        VerticalScrollBarInset = Enum.ScrollBarInset.None,
-        ScrollingEnabled = false,
         ClipsDescendants = false;
         ZIndex = 1;
     })
@@ -235,9 +231,6 @@ function library:CreateWindow(options)
         else
             self.background.Size = size
         end
-
-        -- Aktualisiere die CanvasSize des Containers
-        self.container.CanvasSize = UDim2.new(0, 0, 0, self.organizer.AbsoluteContentSize.Y + 10)
     end
 
     function window:AddToggle(text, callback)
@@ -378,6 +371,8 @@ function library:CreateWindow(options)
         local default = optionsList[1] or ""
 
         callback = callback or function() end
+        local dropdownOpen = false
+
         local dropdown = library.Create("TextButton", {
             Size = UDim2.new(1, -10, 0, 25),
             BackgroundTransparency = 0,
@@ -408,108 +403,69 @@ function library:CreateWindow(options)
             ZIndex = 1,
         })
 
-        local frame
+        local optionsFrame = library.Create('Frame', {
+            Size = UDim2.new(1, 0, 0, 0),
+            Position = UDim2.new(0, 0, 1, 0),
+            BackgroundTransparency = 0,
+            BackgroundColor3 = options.boxcolor,
+            BorderSizePixel = 0,
+            Parent = dropdown,
+            ClipsDescendants = true,
+            ZIndex = 1,
+        })
 
-        local function isInGui(frame)
-            local mloc = game:GetService('UserInputService'):GetMouseLocation()
-            local mouse = Vector2.new(mloc.X, mloc.Y - 36)
+        library.Create('UICorner', {
+            CornerRadius = UDim.new(0, 5),
+            Parent = optionsFrame,
+        })
 
-            local x1, x2 = frame.AbsolutePosition.X, frame.AbsolutePosition.X + frame.AbsoluteSize.X
-            local y1, y2 = frame.AbsolutePosition.Y, frame.AbsolutePosition.Y + frame.AbsoluteSize.Y
+        local listLayout = library.Create('UIListLayout', {
+            Parent = optionsFrame,
+            SortOrder = Enum.SortOrder.LayoutOrder,
+            Padding = UDim.new(0, 2),
+        })
 
-            return (mouse.X >= x1 and mouse.X <= x2) and (mouse.Y >= y1 and mouse.Y <= y2)
+        local optionButtons = {}
+
+        for i, option in ipairs(optionsList) do
+            local optionButton = library.Create('TextButton', {
+                Text = option,
+                Size = UDim2.new(1, -4, 0, 25),
+                Position = UDim2.new(0, 2, 0, 0),
+                BackgroundTransparency = 0,
+                BackgroundColor3 = options.boxcolor,
+                TextColor3 = options.txtcolor,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                TextSize = 16,
+                Font = Enum.Font.Gotham,
+                BorderSizePixel = 0,
+                Parent = optionsFrame,
+                ZIndex = 1,
+            })
+
+            optionButton.MouseButton1Click:Connect(function()
+                dropdown.Text = "  " .. option
+                callback(option)
+                dropdownOpen = false
+                optionsFrame.Size = UDim2.new(1, 0, 0, 0)
+                window:Resize()
+            end)
+
+            table.insert(optionButtons, optionButton)
         end
 
         dropdown.MouseButton1Click:Connect(function()
-            if #optionsList == 0 then
-                return
+            dropdownOpen = not dropdownOpen
+            if dropdownOpen then
+                optionsFrame.Size = UDim2.new(1, 0, 0, (#optionsList * 27))
+            else
+                optionsFrame.Size = UDim2.new(1, 0, 0, 0)
             end
-
-            if frame then
-                frame:Destroy()
-                frame = nil
-                return
-            end
-
-            -- Das Dropdown-Menü wird direkt unter der GUI geparented, um Clipping zu vermeiden
-            frame = library.Create('Frame', {
-                Position = UDim2.new(0, dropdown.AbsolutePosition.X, 0, dropdown.AbsolutePosition.Y + dropdown.AbsoluteSize.Y),
-                BackgroundColor3 = options.boxcolor,
-                Size = UDim2.new(0, dropdown.AbsoluteSize.X, 0, 0),
-                BorderSizePixel = 0,
-                Parent = library.gui, -- Direkt unter der ScreenGui geparented
-                ClipsDescendants = true,
-                ZIndex = 5, -- Höherer ZIndex, damit es über anderen Elementen angezeigt wird
-            })
-
-            library.Create('UICorner', {
-                CornerRadius = UDim.new(0, 5),
-                Parent = frame,
-            })
-
-            local listLayout = library.Create('UIListLayout', {
-                Name = 'Layout',
-                Parent = frame,
-            })
-
-            for i, option in ipairs(optionsList) do
-                local selection = library.Create('TextButton', {
-                    Text = option,
-                    BackgroundColor3 = options.boxcolor,
-                    TextColor3 = options.txtcolor,
-                    BorderSizePixel = 0,
-                    TextSize = 16,
-                    Font = Enum.Font.Gotham,
-                    Size = UDim2.new(1, 0, 0, 25),
-                    Parent = frame,
-                    ZIndex = 5,
-                })
-
-                selection.MouseButton1Click:Connect(function()
-                    dropdown.Text = "  " .. option
-                    callback(option)
-                    frame:Destroy()
-                    frame = nil
-                end)
-            end
-
-            -- Größe des Frames anpassen
-            frame.Size = UDim2.new(0, dropdown.AbsoluteSize.X, 0, listLayout.AbsoluteContentSize.Y)
-
-            -- Aktualisiert die Position des Dropdowns, wenn das Fenster bewegt wird
-            local connection
-            connection = game:GetService("RunService").RenderStepped:Connect(function()
-                if frame and dropdown.Parent then
-                    frame.Position = UDim2.new(0, dropdown.AbsolutePosition.X, 0, dropdown.AbsolutePosition.Y + dropdown.AbsoluteSize.Y)
-                else
-                    if connection then
-                        connection:Disconnect()
-                    end
-                end
-            end)
+            window:Resize()
         end)
 
-        game:GetService('UserInputService').InputBegan:Connect(function(m)
-            if m.UserInputType == Enum.UserInputType.MouseButton1 then
-                if frame and (not isInGui(frame)) then
-                    frame:Destroy()
-                    frame = nil
-                end
-            end
-        end)
-
-        callback(default)
         self:Resize()
-        return {
-            Refresh = function(self, array)
-                if frame then
-                    frame:Destroy()
-                    frame = nil
-                end
-                optionsList = array
-                dropdown.Text = "  " .. optionsList[1]
-            end
-        }
+        return dropdown
     end
 
     return window
