@@ -1,4 +1,4 @@
--- Beginn des korrigierten Skripts
+-- Beginn des vollständigen und korrigierten Skripts
 local library = {
     windowcount = 0;
 }
@@ -364,7 +364,7 @@ function library:CreateWindow(options)
         return label
     end
 
-    -- Verbesserte AddDropdown-Funktion
+    -- Korrigierte AddDropdown-Funktion
     function window:AddDropdown(optionsList, callback)
         self.count = self.count + 1
         optionsList = optionsList or {}
@@ -372,6 +372,7 @@ function library:CreateWindow(options)
 
         callback = callback or function() end
         local dropdownOpen = false
+        local modalOverlay
 
         local dropdown = library.Create("TextButton", {
             Size = UDim2.new(1, -10, 0, 25),
@@ -405,17 +406,16 @@ function library:CreateWindow(options)
             ZIndex = 1,
         })
 
-        -- Optionen Frame direkt unter library.gui geparented
         local optionsFrame = library.Create('Frame', {
             Size = UDim2.new(0, dropdown.AbsoluteSize.X, 0, 0),
             Position = UDim2.new(0, dropdown.AbsolutePosition.X, 0, dropdown.AbsolutePosition.Y + dropdown.AbsoluteSize.Y),
-            BackgroundTransparency = 0, -- Opaque to receive input
+            BackgroundTransparency = 0,
             BackgroundColor3 = options.boxcolor,
             BorderSizePixel = 0,
-            Parent = library.gui, -- Unter library.gui geparented
+            Parent = nil, -- Wir setzen den Parent beim Öffnen des Dropdowns
             ClipsDescendants = false,
-            ZIndex = 100, -- Höherer ZIndex
-            Active = true, -- Aktivieren, um Eingaben zu empfangen
+            ZIndex = 100, -- Höherer ZIndex, damit es über anderen UI-Elementen liegt
+            Active = true,
         })
 
         library.Create('UICorner', {
@@ -444,9 +444,9 @@ function library:CreateWindow(options)
                 Font = Enum.Font.Gotham,
                 BorderSizePixel = 0,
                 Parent = optionsFrame,
-                ZIndex = 100,
+                ZIndex = 101,
                 AutoButtonColor = false,
-                Active = true, -- Aktivieren, um Eingaben zu empfangen
+                Active = true,
             })
 
             optionButton.MouseButton1Click:Connect(function()
@@ -454,6 +454,10 @@ function library:CreateWindow(options)
                 callback(option)
                 dropdownOpen = false
                 optionsFrame.Visible = false
+                optionsFrame.Parent = nil
+                if modalOverlay then
+                    modalOverlay:Destroy()
+                end
             end)
 
             table.insert(optionButtons, optionButton)
@@ -464,34 +468,56 @@ function library:CreateWindow(options)
         dropdown.MouseButton1Click:Connect(function()
             dropdownOpen = not dropdownOpen
             if dropdownOpen then
+                -- Modales Overlay erstellen
+                modalOverlay = library.Create('Frame', {
+                    Size = UDim2.new(1, 0, 1, 0),
+                    Position = UDim2.new(0, 0, 0, 0),
+                    BackgroundTransparency = 1,
+                    BackgroundColor3 = Color3.new(0, 0, 0),
+                    BorderSizePixel = 0,
+                    Parent = library.gui,
+                    ZIndex = 99,
+                    Active = true,
+                })
+
+                -- Optionen-Frame unter dem Modal-Overlay parenten
+                optionsFrame.Parent = modalOverlay
+                optionsFrame.ZIndex = 100
+                for _, child in ipairs(optionsFrame:GetChildren()) do
+                    child.ZIndex = 101
+                end
+
                 optionsFrame.Visible = true
                 optionsFrame.Size = UDim2.new(0, dropdown.AbsoluteSize.X, 0, listLayout.AbsoluteContentSize.Y)
                 optionsFrame.Position = UDim2.new(0, dropdown.AbsolutePosition.X, 0, dropdown.AbsolutePosition.Y + dropdown.AbsoluteSize.Y)
+
+                -- Schließen des Dropdowns beim Klicken außerhalb
+                modalOverlay.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        local mousePos = game:GetService('UserInputService'):GetMouseLocation()
+                        local withinOptions = (mousePos.X > optionsFrame.AbsolutePosition.X and mousePos.X < optionsFrame.AbsolutePosition.X + optionsFrame.AbsoluteSize.X) and
+                            (mousePos.Y > optionsFrame.AbsolutePosition.Y and mousePos.Y < optionsFrame.AbsolutePosition.Y + optionsFrame.AbsoluteSize.Y)
+                        if not withinOptions then
+                            dropdownOpen = false
+                            optionsFrame.Visible = false
+                            optionsFrame.Parent = nil
+                            modalOverlay:Destroy()
+                        end
+                    end
+                end)
             else
-                optionsFrame.Visible = false
+                if modalOverlay then
+                    optionsFrame.Visible = false
+                    optionsFrame.Parent = nil
+                    modalOverlay:Destroy()
+                end
             end
         end)
 
         -- Aktualisiert die Position des Optionsrahmens, falls das Fenster bewegt wird
         game:GetService("RunService").RenderStepped:Connect(function()
-            if dropdownOpen and dropdown.AbsolutePosition then
+            if dropdownOpen and optionsFrame.Visible and dropdown.AbsolutePosition then
                 optionsFrame.Position = UDim2.new(0, dropdown.AbsolutePosition.X, 0, dropdown.AbsolutePosition.Y + dropdown.AbsoluteSize.Y)
-            end
-        end)
-
-        -- Klick außerhalb des Dropdowns schließt es
-        game:GetService('UserInputService').InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                local mousePos = game:GetService('UserInputService'):GetMouseLocation()
-                local withinDropdown = (mousePos.X > optionsFrame.AbsolutePosition.X and mousePos.X < optionsFrame.AbsolutePosition.X + optionsFrame.AbsoluteSize.X) and
-                    (mousePos.Y > optionsFrame.AbsolutePosition.Y and mousePos.Y < optionsFrame.AbsolutePosition.Y + optionsFrame.AbsoluteSize.Y)
-                local withinButton = (mousePos.X > dropdown.AbsolutePosition.X and mousePos.X < dropdown.AbsolutePosition.X + dropdown.AbsoluteSize.X) and
-                    (mousePos.Y > dropdown.AbsolutePosition.Y and mousePos.Y < dropdown.AbsolutePosition.Y + dropdown.AbsoluteSize.Y)
-
-                if not withinDropdown and not withinButton then
-                    dropdownOpen = false
-                    optionsFrame.Visible = false
-                end
             end
         end)
 
@@ -503,4 +529,4 @@ function library:CreateWindow(options)
 end
 
 return library
--- Ende des korrigierten Skripts
+-- Ende des vollständigen und korrigierten Skripts
