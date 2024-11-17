@@ -1,7 +1,7 @@
 local whitelistedUserIds = {
     3342385890, -- NRWOtuziki
-    7307129283, --DATS
-    3,
+    7307129283, -- DATS
+    7512855479, -- Symen
     4,
 }
 local function isWhitelisted(userId)
